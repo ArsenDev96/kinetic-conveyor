@@ -163,15 +163,14 @@ z_index = 5
 script = ExtResource("2_junction_controller")
 
 [node name="JunctionVisual" type="Node2D" parent="Junction"]
+position = Vector2(360, 540)
 
 [node name="JunctionHousing" type="Sprite2D" parent="Junction/JunctionVisual" unique_id=1962268262]
 texture_filter = 1
-position = Vector2(360, 540)
 scale = Vector2(0.14354, 0.14354)
 texture = ExtResource("11_junction")
 
 [node name="DirectionMarker" type="Node2D" parent="Junction/JunctionVisual" unique_id=193270197]
-position = Vector2(360, 540)
 z_index = 1
 
 [node name="DirectionArrow" type="Sprite2D" parent="Junction/JunctionVisual/DirectionMarker" unique_id=383643162]
