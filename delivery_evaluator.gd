@@ -2,6 +2,9 @@ extends Node2D
 
 enum RoundState { PLAYING, WON, LOST }
 
+const FEEDBACK_CORRECT_TEXTURE := preload("res://assets/ui/feedback_correct.png")
+const FEEDBACK_WRONG_TEXTURE := preload("res://assets/ui/feedback_wrong.png")
+
 @export var total_blocks := 10
 @export var maximum_mistakes := 3
 
@@ -11,14 +14,16 @@ var completed_count := 0
 var round_state := RoundState.PLAYING
 var _feedback_version := 0
 
-@onready var feedback_label: Label = $Labels/DeliveryFeedback
-@onready var correct_label: Label = $Labels/CorrectCount
-@onready var mistake_label: Label = $Labels/MistakeCount
-@onready var blocks_label: Label = $Labels/BlocksProgress
-@onready var result_panel: Panel = $RoundUI/ResultPanel
-@onready var result_title: Label = $RoundUI/ResultPanel/ResultTitle
-@onready var result_summary: Label = $RoundUI/ResultPanel/ResultSummary
-@onready var retry_button: Button = $RoundUI/ResultPanel/RetryButton
+@onready var feedback_presentation: Node2D = $HUD/CountersAndFeedback/FeedbackPresentation
+@onready var feedback_background: Sprite2D = $HUD/CountersAndFeedback/FeedbackPresentation/FeedbackBackground
+@onready var feedback_label: Label = $HUD/CountersAndFeedback/FeedbackPresentation/DeliveryFeedback
+@onready var correct_label: Label = $HUD/CountersAndFeedback/CorrectCount
+@onready var mistake_label: Label = $HUD/CountersAndFeedback/MistakeCount
+@onready var blocks_label: Label = $HUD/CountersAndFeedback/BlocksProgress
+@onready var result_panel: Control = $HUD/ResultOverlay
+@onready var result_title: Label = $HUD/ResultOverlay/ResultPanel/ResultTitle
+@onready var result_summary: Label = $HUD/ResultOverlay/ResultPanel/ResultSummary
+@onready var retry_button: Button = $HUD/ResultOverlay/ResultPanel/RetryButton
 @onready var block_spawner: Node = $BlockSpawner
 @onready var junction: Area2D = $Junction
 
@@ -74,9 +79,14 @@ func _show_feedback(is_correct: bool) -> void:
 	_feedback_version += 1
 	var version := _feedback_version
 	feedback_label.text = "CORRECT" if is_correct else "WRONG"
-	feedback_label.modulate = Color(0.35, 0.9, 0.4) if is_correct else Color(1.0, 0.35, 0.3)
-	feedback_label.visible = true
+	feedback_background.texture = FEEDBACK_CORRECT_TEXTURE if is_correct else FEEDBACK_WRONG_TEXTURE
+	feedback_presentation.scale = Vector2(0.9, 0.9)
+	feedback_presentation.modulate = Color.WHITE
+	feedback_presentation.visible = true
+	var pop_tween := create_tween()
+	pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop_tween.tween_property(feedback_presentation, "scale", Vector2.ONE, 0.16)
 
 	await get_tree().create_timer(0.85).timeout
 	if version == _feedback_version:
-		feedback_label.visible = false
+		feedback_presentation.visible = false

@@ -1,5 +1,8 @@
 extends PathFollow2D
 
+const BLOCK_RED_TEXTURE := preload("res://assets/gameplay/blocks/block_red.png")
+const BLOCK_BLUE_TEXTURE := preload("res://assets/gameplay/blocks/block_blue.png")
+
 @export var speed: float = 100.0
 @export var cleanup_delay: float = 0.65
 
@@ -23,7 +26,7 @@ func configure(color_type: BlockTypes.BlockColor, junction: Node, red_outbound: 
 	_red_bin = red_bin
 	_blue_bin = blue_bin
 	_delivery_evaluator = delivery_evaluator
-	$BlockVisual.color = Color(0.94, 0.12, 0.1) if block_color == BlockTypes.BlockColor.RED else Color(0.08, 0.42, 0.95)
+	$BlockVisual/BlockSprite.texture = BLOCK_RED_TEXTURE if block_color == BlockTypes.BlockColor.RED else BLOCK_BLUE_TEXTURE
 
 
 func _process(delta: float) -> void:

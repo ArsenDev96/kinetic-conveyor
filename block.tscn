@@ -1,12 +1,16 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://block_route_mover.gd" id="1_block_route_mover"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/blocks/block_red.png" id="2_block_red"]
 
 [node name="BlockFollow" type="PathFollow2D" groups=["active_blocks"]]
 rotates = false
 loop = false
 script = ExtResource("1_block_route_mover")
 
-[node name="BlockVisual" type="Polygon2D" parent="."]
-color = Color(0.94, 0.12, 0.1, 1)
-polygon = PackedVector2Array(-19, -25, 19, -25, 25, -19, 25, 19, 19, 25, -19, 25, -25, 19, -25, -19)
+[node name="BlockVisual" type="Node2D" parent="."]
+
+[node name="BlockSprite" type="Sprite2D" parent="BlockVisual"]
+texture_filter = 1
+scale = Vector2(0.045, 0.045)
+texture = ExtResource("2_block_red")
