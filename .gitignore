@@ -1,0 +1,27 @@
+# Godot 4 generated data and import metadata
+.godot/
+*.import
+
+# Generated export/build directories
+/android/
+/builds/
+/exports/
+
+# Local export credentials and signing data
+export_credentials.cfg
+*.keystore
+*.jks
+*.p12
+*.pfx
+
+# C# / Mono generated data (if enabled later)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Editor and operating-system metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
