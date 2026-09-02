@@ -5,6 +5,19 @@
 [ext_resource type="Script" uid="uid://poufm2nc7jm8" path="res://delivery_evaluator.gd" id="3_delivery_evaluator"]
 [ext_resource type="Script" uid="uid://bo560cs0x0rb2" path="res://bin.gd" id="4_bin"]
 [ext_resource type="Script" uid="uid://ciwmlh61j0yd4" path="res://block_spawner.gd" id="5_block_spawner"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/board/board_background.png" id="6_board"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/conveyors/conveyor_straight.png" id="7_straight"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/conveyors/conveyor_diagonal.png" id="8_diagonal"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/sources/source_red.png" id="9_source_red"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/sources/source_blue.png" id="10_source_blue"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/junction/junction_main.png" id="11_junction"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/junction/junction_arrow.png" id="12_arrow"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/bins/bin_red.png" id="13_bin_red"]
+[ext_resource type="Texture2D" path="res://assets/gameplay/bins/bin_blue.png" id="14_bin_blue"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud_counter_panel.png" id="15_hud_panel"]
+[ext_resource type="Texture2D" path="res://assets/ui/feedback_correct.png" id="16_feedback_correct"]
+[ext_resource type="Texture2D" path="res://assets/ui/result_panel.png" id="17_result_panel"]
+[ext_resource type="Texture2D" path="res://assets/ui/retry_button.png" id="18_retry_button"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_junction"]
 size = Vector2(180, 180)
@@ -49,104 +62,140 @@ corner_radius_bottom_left = 14
 script = ExtResource("3_delivery_evaluator")
 
 [node name="BoardVisual" type="Node2D" parent="." unique_id=1267591945]
+z_index = -10
 
-[node name="PlaceholderBackground" type="Polygon2D" parent="BoardVisual" unique_id=278740169]
-color = Color(0.09411765, 0.12941177, 0.16862746, 1)
-polygon = PackedVector2Array(0, 0, 720, 0, 720, 1280, 0, 1280)
+[node name="BoardBackground" type="Sprite2D" parent="BoardVisual" unique_id=278740169]
+texture_filter = 1
+position = Vector2(360, 640)
+scale = Vector2(0.76514, 0.76514)
+texture = ExtResource("6_board")
 
 [node name="Conveyors" type="Node2D" parent="." unique_id=568993667]
+z_index = -5
 
 [node name="RedInboundVisual" type="Node2D" parent="Conveyors"]
 
-[node name="PlaceholderLine" type="Line2D" parent="Conveyors/RedInboundVisual" unique_id=1659025165]
-points = PackedVector2Array(180, 155, 180, 360, 360, 510)
-width = 78.0
-default_color = Color(0.4392157, 0.4745098, 0.5176471, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
+[node name="StraightSection" type="Sprite2D" parent="Conveyors/RedInboundVisual" unique_id=1659025165]
+texture_filter = 1
+position = Vector2(180, 257.5)
+scale = Vector2(0.07863, 0.12926)
+texture = ExtResource("7_straight")
+
+[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/RedInboundVisual"]
+texture_filter = 1
+position = Vector2(270, 435)
+rotation = -0.031
+scale = Vector2(0.166, 0.166)
+texture = ExtResource("8_diagonal")
 
 [node name="BlueInboundVisual" type="Node2D" parent="Conveyors"]
 
-[node name="PlaceholderLine" type="Line2D" parent="Conveyors/BlueInboundVisual" unique_id=655557480]
-points = PackedVector2Array(540, 155, 540, 360, 360, 510)
-width = 78.0
-default_color = Color(0.4392157, 0.4745098, 0.5176471, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
+[node name="StraightSection" type="Sprite2D" parent="Conveyors/BlueInboundVisual" unique_id=655557480]
+texture_filter = 1
+position = Vector2(540, 257.5)
+scale = Vector2(0.07863, 0.12926)
+texture = ExtResource("7_straight")
+
+[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/BlueInboundVisual"]
+texture_filter = 1
+position = Vector2(450, 435)
+rotation = 0.031
+scale = Vector2(-0.166, 0.166)
+texture = ExtResource("8_diagonal")
+
+[node name="JunctionExitVisual" type="Sprite2D" parent="Conveyors"]
+texture_filter = 1
+position = Vector2(360, 580)
+scale = Vector2(0.0786, 0.096)
+texture = ExtResource("7_straight")
 
 [node name="RedOutboundVisual" type="Node2D" parent="Conveyors"]
 
-[node name="PlaceholderLine" type="Line2D" parent="Conveyors/RedOutboundVisual" unique_id=1153479740]
-points = PackedVector2Array(360, 650, 180, 850, 180, 1107)
-width = 78.0
-default_color = Color(0.4392157, 0.4745098, 0.5176471, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
+[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/RedOutboundVisual" unique_id=1153479740]
+texture_filter = 1
+position = Vector2(270, 750)
+rotation = -0.111
+scale = Vector2(-0.15, 0.15)
+texture = ExtResource("8_diagonal")
+
+[node name="StraightSection" type="Sprite2D" parent="Conveyors/RedOutboundVisual"]
+texture_filter = 1
+position = Vector2(180, 978.5)
+scale = Vector2(0.07863, 0.16204)
+texture = ExtResource("7_straight")
 
 [node name="BlueOutboundVisual" type="Node2D" parent="Conveyors"]
 
-[node name="PlaceholderLine" type="Line2D" parent="Conveyors/BlueOutboundVisual" unique_id=1733936060]
-points = PackedVector2Array(360, 650, 540, 850, 540, 1107)
-width = 78.0
-default_color = Color(0.4392157, 0.4745098, 0.5176471, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
+[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/BlueOutboundVisual" unique_id=1733936060]
+texture_filter = 1
+position = Vector2(450, 750)
+rotation = 0.111
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("8_diagonal")
+
+[node name="StraightSection" type="Sprite2D" parent="Conveyors/BlueOutboundVisual"]
+texture_filter = 1
+position = Vector2(540, 978.5)
+scale = Vector2(0.07863, 0.16204)
+texture = ExtResource("7_straight")
 
 [node name="Sources" type="Node2D" parent="." unique_id=1352065766]
+z_index = -3
 
 [node name="RedSourceVisual" type="Node2D" parent="Sources"]
 
-[node name="PlaceholderShape" type="Polygon2D" parent="Sources/RedSourceVisual" unique_id=1808651792]
-color = Color(0.8980392, 0.22352941, 0.20784314, 1)
-polygon = PackedVector2Array(60, 95, 300, 95, 300, 220, 60, 220)
+[node name="SourceSprite" type="Sprite2D" parent="Sources/RedSourceVisual" unique_id=1808651792]
+texture_filter = 1
+position = Vector2(180, 155)
+scale = Vector2(0.13529, 0.13529)
+texture = ExtResource("9_source_red")
 
 [node name="BlueSourceVisual" type="Node2D" parent="Sources"]
 
-[node name="PlaceholderShape" type="Polygon2D" parent="Sources/BlueSourceVisual" unique_id=1762044676]
-color = Color(0.09803922, 0.4627451, 0.8235294, 1)
-polygon = PackedVector2Array(420, 95, 660, 95, 660, 220, 420, 220)
+[node name="SourceSprite" type="Sprite2D" parent="Sources/BlueSourceVisual" unique_id=1762044676]
+texture_filter = 1
+position = Vector2(540, 155)
+scale = Vector2(0.13529, 0.13529)
+texture = ExtResource("10_source_blue")
 
 [node name="Junction" type="Area2D" parent="." unique_id=1839861545]
+z_index = 5
 script = ExtResource("2_junction_controller")
 
 [node name="JunctionVisual" type="Node2D" parent="Junction"]
 
-[node name="PlaceholderBody" type="Polygon2D" parent="Junction/JunctionVisual" unique_id=1962268262]
-color = Color(0.8509804, 0.87058824, 0.8901961, 1)
-polygon = PackedVector2Array(300, 460, 420, 460, 450, 490, 450, 590, 420, 620, 300, 620, 270, 590, 270, 490)
+[node name="JunctionHousing" type="Sprite2D" parent="Junction/JunctionVisual" unique_id=1962268262]
+texture_filter = 1
+position = Vector2(360, 540)
+scale = Vector2(0.14354, 0.14354)
+texture = ExtResource("11_junction")
 
 [node name="DirectionMarker" type="Node2D" parent="Junction/JunctionVisual" unique_id=193270197]
-position = Vector2(360, 485)
+position = Vector2(360, 540)
+z_index = 1
 
-[node name="DirectionStem" type="Line2D" parent="Junction/JunctionVisual/DirectionMarker" unique_id=735920376]
-points = PackedVector2Array(0, -10, 0, 10)
-width = 18.0
-default_color = Color(0.9607843, 0.7254902, 0.25882354, 1)
-begin_cap_mode = 2
-end_cap_mode = 2
-
-[node name="DirectionArrow" type="Polygon2D" parent="Junction/JunctionVisual/DirectionMarker" unique_id=383643162]
-color = Color(0.9607843, 0.7254902, 0.25882354, 1)
-polygon = PackedVector2Array(-22, 7, 22, 7, 0, 30)
+[node name="DirectionArrow" type="Sprite2D" parent="Junction/JunctionVisual/DirectionMarker" unique_id=383643162]
+texture_filter = 1
+scale = Vector2(0.0442, 0.0442)
+texture = ExtResource("12_arrow")
 
 [node name="JunctionInputHitArea" type="CollisionShape2D" parent="Junction" unique_id=236863293]
 position = Vector2(360, 540)
 shape = SubResource("RectangleShape2D_junction")
 
 [node name="Bins" type="Node2D" parent="." unique_id=1442170970]
+z_index = -3
 
 [node name="RedBin" type="Node2D" parent="Bins" unique_id=576010477]
 script = ExtResource("4_bin")
 
 [node name="RedBinVisual" type="Node2D" parent="Bins/RedBin"]
 
-[node name="PlaceholderShape" type="Polygon2D" parent="Bins/RedBin/RedBinVisual"]
-color = Color(0.7176471, 0.10980392, 0.10980392, 1)
-polygon = PackedVector2Array(60, 1030, 300, 1030, 300, 1185, 60, 1185)
+[node name="BinSprite" type="Sprite2D" parent="Bins/RedBin/RedBinVisual"]
+texture_filter = 1
+position = Vector2(180, 1107)
+scale = Vector2(0.15625, 0.15625)
+texture = ExtResource("13_bin_red")
 
 [node name="BlueBin" type="Node2D" parent="Bins" unique_id=848172358]
 script = ExtResource("4_bin")
@@ -154,11 +203,14 @@ accepted_color = 1
 
 [node name="BlueBinVisual" type="Node2D" parent="Bins/BlueBin"]
 
-[node name="PlaceholderShape" type="Polygon2D" parent="Bins/BlueBin/BlueBinVisual"]
-color = Color(0.050980393, 0.2784314, 0.6313726, 1)
-polygon = PackedVector2Array(420, 1030, 660, 1030, 660, 1185, 420, 1185)
+[node name="BinSprite" type="Sprite2D" parent="Bins/BlueBin/BlueBinVisual"]
+texture_filter = 1
+position = Vector2(540, 1107)
+scale = Vector2(0.15625, 0.15625)
+texture = ExtResource("14_bin_blue")
 
 [node name="MovementPaths" type="Node2D" parent="." unique_id=2113354974]
+z_index = 2
 
 [node name="RedInboundPath" type="Path2D" parent="MovementPaths" unique_id=157412903]
 curve = SubResource("Curve2D_red_inbound")
@@ -180,109 +232,110 @@ block_scene = ExtResource("1_block_scene")
 
 [node name="CountersAndFeedback" type="Node2D" parent="HUD"]
 
+[node name="CounterBackings" type="Node2D" parent="HUD/CountersAndFeedback"]
+
+[node name="CorrectPanel" type="Sprite2D" parent="HUD/CountersAndFeedback/CounterBackings"]
+texture_filter = 1
+position = Vector2(110, 55)
+scale = Vector2(0.095, 0.09)
+texture = ExtResource("15_hud_panel")
+
+[node name="ProgressPanel" type="Sprite2D" parent="HUD/CountersAndFeedback/CounterBackings"]
+texture_filter = 1
+position = Vector2(360, 55)
+scale = Vector2(0.112, 0.1)
+texture = ExtResource("15_hud_panel")
+
+[node name="MistakePanel" type="Sprite2D" parent="HUD/CountersAndFeedback/CounterBackings"]
+texture_filter = 1
+position = Vector2(610, 55)
+scale = Vector2(0.095, 0.09)
+texture = ExtResource("15_hud_panel")
+
 [node name="CorrectCount" type="Label" parent="HUD/CountersAndFeedback" unique_id=769272927]
 offset_left = 15.0
-offset_top = 24.0
-offset_right = 175.0
-offset_bottom = 56.0
-theme_override_colors/font_color = Color(0.75, 0.9, 0.78, 1)
+offset_top = 38.0
+offset_right = 205.0
+offset_bottom = 72.0
+theme_override_colors/font_color = Color(0.75, 1, 0.78, 1)
 theme_override_font_sizes/font_size = 20
 text = "Correct: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="DeliveryFeedback" type="Label" parent="HUD/CountersAndFeedback" unique_id=77396539]
+[node name="FeedbackPresentation" type="Node2D" parent="HUD/CountersAndFeedback"]
 visible = false
-offset_left = 260.0
-offset_top = 20.0
-offset_right = 460.0
-offset_bottom = 60.0
+position = Vector2(360, 118)
+
+[node name="FeedbackBackground" type="Sprite2D" parent="HUD/CountersAndFeedback/FeedbackPresentation"]
+texture_filter = 1
+scale = Vector2(0.12, 0.06)
+texture = ExtResource("16_feedback_correct")
+
+[node name="DeliveryFeedback" type="Label" parent="HUD/CountersAndFeedback/FeedbackPresentation" unique_id=77396539]
+offset_left = -100.0
+offset_top = -22.0
+offset_right = 100.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 24
 text = "CORRECT"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="MistakeCount" type="Label" parent="HUD/CountersAndFeedback" unique_id=1524551893]
-offset_left = 525.0
-offset_top = 24.0
+offset_left = 515.0
+offset_top = 38.0
 offset_right = 705.0
-offset_bottom = 56.0
+offset_bottom = 72.0
 theme_override_colors/font_color = Color(1, 0.78, 0.76, 1)
 theme_override_font_sizes/font_size = 20
 text = "Mistakes: 0"
-horizontal_alignment = 2
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BlocksProgress" type="Label" parent="HUD/CountersAndFeedback" unique_id=1357215857]
-offset_left = 260.0
-offset_top = 62.0
-offset_right = 460.0
-offset_bottom = 92.0
-theme_override_colors/font_color = Color(0.85, 0.87, 0.9, 1)
-theme_override_font_sizes/font_size = 18
+offset_left = 238.0
+offset_top = 34.0
+offset_right = 482.0
+offset_bottom = 76.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 23
 text = "Blocks: 0 / 10"
 horizontal_alignment = 1
-
-[node name="RedSourceLabel" type="Label" parent="HUD" unique_id=1975960498]
-offset_left = 94.0
-offset_top = 133.0
-offset_right = 266.0
-offset_bottom = 178.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 28
-text = "RED SOURCE"
-horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BlueSourceLabel" type="Label" parent="HUD" unique_id=2072810652]
-offset_left = 441.0
-offset_top = 133.0
-offset_right = 639.0
-offset_bottom = 178.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 28
-text = "BLUE SOURCE"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="JunctionLabel" type="Label" parent="HUD" unique_id=1150571503]
-offset_left = 275.0
-offset_top = 515.0
-offset_right = 445.0
-offset_bottom = 560.0
-theme_override_colors/font_color = Color(0.1254902, 0.15686275, 0.19607843, 1)
-theme_override_font_sizes/font_size = 28
-text = "JUNCTION"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="RedBinLabel" type="Label" parent="HUD" unique_id=1028614207]
-offset_left = 85.0
-offset_top = 1080.0
-offset_right = 275.0
-offset_bottom = 1135.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 32
-text = "RED BIN"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BlueBinLabel" type="Label" parent="HUD" unique_id=1974606090]
-offset_left = 445.0
-offset_top = 1080.0
-offset_right = 635.0
-offset_bottom = 1135.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 32
-text = "BLUE BIN"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ResultPanel" type="Panel" parent="HUD" unique_id=1188403747]
+[node name="ResultOverlay" type="Control" parent="HUD"]
 visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="DimBackground" type="ColorRect" parent="HUD/ResultOverlay"]
+layout_mode = 0
+offset_right = 720.0
+offset_bottom = 1280.0
+mouse_filter = 2
+color = Color(0.015, 0.025, 0.04, 0.72)
+
+[node name="ResultPanel" type="Control" parent="HUD/ResultOverlay" unique_id=1188403747]
+layout_mode = 0
 offset_left = 135.0
 offset_top = 405.0
 offset_right = 585.0
 offset_bottom = 785.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_result_panel")
 
-[node name="ResultTitle" type="Label" parent="HUD/ResultPanel" unique_id=1737957009]
+[node name="PanelVisual" type="Sprite2D" parent="HUD/ResultOverlay/ResultPanel"]
+texture_filter = 1
+position = Vector2(225, 190)
+scale = Vector2(0.32967, 0.32986)
+texture = ExtResource("17_result_panel")
+
+[node name="ResultTitle" type="Label" parent="HUD/ResultOverlay/ResultPanel" unique_id=1737957009]
 layout_mode = 0
 offset_left = 30.0
 offset_top = 45.0
@@ -294,7 +347,7 @@ text = "LEVEL COMPLETE"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ResultSummary" type="Label" parent="HUD/ResultPanel" unique_id=2023966534]
+[node name="ResultSummary" type="Label" parent="HUD/ResultOverlay/ResultPanel" unique_id=2023966534]
 layout_mode = 0
 offset_left = 30.0
 offset_top = 125.0
@@ -307,11 +360,18 @@ Mistakes: 0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RetryButton" type="Button" parent="HUD/ResultPanel" unique_id=1526477036]
+[node name="RetryButtonVisual" type="Sprite2D" parent="HUD/ResultOverlay/ResultPanel"]
+texture_filter = 1
+position = Vector2(225, 300)
+scale = Vector2(0.10129, 0.08287)
+texture = ExtResource("18_retry_button")
+
+[node name="RetryButton" type="Button" parent="HUD/ResultOverlay/ResultPanel" unique_id=1526477036]
 layout_mode = 0
 offset_left = 115.0
 offset_top = 270.0
 offset_right = 335.0
 offset_bottom = 330.0
 theme_override_font_sizes/font_size = 24
+flat = true
 text = "RETRY"

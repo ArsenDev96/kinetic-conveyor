@@ -11,6 +11,7 @@ var current_route: Route:
 			_update_direction_marker()
 var _last_toggle_time := -1000
 var interaction_enabled := true
+var _rotation_tween: Tween
 @onready var direction_marker: Node2D = $JunctionVisual/DirectionMarker
 
 
@@ -67,4 +68,12 @@ func set_interaction_enabled(enabled: bool) -> void:
 
 
 func _update_direction_marker() -> void:
-	direction_marker.rotation = PI / 4.0 if current_route == Route.LEFT else -PI / 4.0
+	var target_rotation := PI / 4.0 if current_route == Route.LEFT else -PI / 4.0
+	if not is_node_ready():
+		direction_marker.rotation = target_rotation
+		return
+	if _rotation_tween != null:
+		_rotation_tween.kill()
+	_rotation_tween = create_tween()
+	_rotation_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_rotation_tween.tween_property(direction_marker, "rotation", target_rotation, 0.15)
