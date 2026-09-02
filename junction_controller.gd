@@ -11,7 +11,7 @@ var current_route: Route:
 			_update_direction_marker()
 var _last_toggle_time := -1000
 var interaction_enabled := true
-@onready var direction_marker: Node2D = $DirectionMarker
+@onready var direction_marker: Node2D = $JunctionVisual/DirectionMarker
 
 
 func _ready() -> void:

@@ -7,6 +7,8 @@ rotates = false
 loop = false
 script = ExtResource("1_block_route_mover")
 
-[node name="BlockVisual" type="Polygon2D" parent="."]
+[node name="BlockVisual" type="Node2D" parent="."]
+
+[node name="PlaceholderShape" type="Polygon2D" parent="BlockVisual"]
 color = Color(0.94, 0.12, 0.1, 1)
 polygon = PackedVector2Array(-19, -25, 19, -25, 25, -19, 25, 19, 19, 25, -19, 25, -25, 19, -25, -19)

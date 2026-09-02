@@ -11,14 +11,14 @@ var completed_count := 0
 var round_state := RoundState.PLAYING
 var _feedback_version := 0
 
-@onready var feedback_label: Label = $Labels/DeliveryFeedback
-@onready var correct_label: Label = $Labels/CorrectCount
-@onready var mistake_label: Label = $Labels/MistakeCount
-@onready var blocks_label: Label = $Labels/BlocksProgress
-@onready var result_panel: Panel = $RoundUI/ResultPanel
-@onready var result_title: Label = $RoundUI/ResultPanel/ResultTitle
-@onready var result_summary: Label = $RoundUI/ResultPanel/ResultSummary
-@onready var retry_button: Button = $RoundUI/ResultPanel/RetryButton
+@onready var feedback_label: Label = $HUD/CountersAndFeedback/DeliveryFeedback
+@onready var correct_label: Label = $HUD/CountersAndFeedback/CorrectCount
+@onready var mistake_label: Label = $HUD/CountersAndFeedback/MistakeCount
+@onready var blocks_label: Label = $HUD/CountersAndFeedback/BlocksProgress
+@onready var result_panel: Panel = $HUD/ResultPanel
+@onready var result_title: Label = $HUD/ResultPanel/ResultTitle
+@onready var result_summary: Label = $HUD/ResultPanel/ResultSummary
+@onready var retry_button: Button = $HUD/ResultPanel/RetryButton
 @onready var block_spawner: Node = $BlockSpawner
 @onready var junction: Area2D = $Junction
 

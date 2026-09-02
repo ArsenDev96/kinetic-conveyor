@@ -23,7 +23,7 @@ func configure(color_type: BlockTypes.BlockColor, junction: Node, red_outbound: 
 	_red_bin = red_bin
 	_blue_bin = blue_bin
 	_delivery_evaluator = delivery_evaluator
-	$BlockVisual.color = Color(0.94, 0.12, 0.1) if block_color == BlockTypes.BlockColor.RED else Color(0.08, 0.42, 0.95)
+	$BlockVisual/PlaceholderShape.color = Color(0.94, 0.12, 0.1) if block_color == BlockTypes.BlockColor.RED else Color(0.08, 0.42, 0.95)
 
 
 func _process(delta: float) -> void:
