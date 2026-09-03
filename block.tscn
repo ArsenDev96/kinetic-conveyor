@@ -1,16 +1,16 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://j7w128o0i1fo"]
 
-[ext_resource type="Script" path="res://block_route_mover.gd" id="1_block_route_mover"]
-[ext_resource type="Texture2D" path="res://assets/themes/factory/blocks/block_red.png" id="2_block_red"]
+[ext_resource type="Script" uid="uid://xiltxqsxgos6" path="res://block_route_mover.gd" id="1_block_route_mover"]
+[ext_resource type="Texture2D" uid="uid://ckuqs83ap2i04" path="res://assets/themes/factory/blocks/block_red.png" id="2_block_red"]
 
-[node name="BlockFollow" type="PathFollow2D" groups=["active_blocks"]]
+[node name="BlockFollow" type="PathFollow2D" unique_id=1648506110 groups=["active_blocks"]]
 rotates = false
 loop = false
 script = ExtResource("1_block_route_mover")
 
-[node name="BlockVisual" type="Node2D" parent="."]
+[node name="BlockVisual" type="Node2D" parent="." unique_id=1080068215]
 
-[node name="BlockSprite" type="Sprite2D" parent="BlockVisual"]
+[node name="BlockSprite" type="Sprite2D" parent="BlockVisual" unique_id=500951131]
 texture_filter = 1
 scale = Vector2(0.045, 0.045)
 texture = ExtResource("2_block_red")
