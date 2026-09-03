@@ -5,7 +5,6 @@
 [ext_resource type="Script" uid="uid://ciwmlh61j0yd4" path="res://block_spawner.gd" id="5_block_spawner"]
 [ext_resource type="Texture2D" uid="uid://c4qhakp34c3vc" path="res://assets/themes/factory/board/board_background.png" id="6_board"]
 [ext_resource type="Texture2D" uid="uid://bps6rtxd3qtid" path="res://assets/themes/factory/conveyors/conveyor_straight.png" id="7_straight"]
-[ext_resource type="Texture2D" uid="uid://boq00tejyle65" path="res://assets/themes/factory/conveyors/conveyor_diagonal.png" id="8_diagonal"]
 [ext_resource type="Texture2D" uid="uid://ctfkewytxkxo2" path="res://assets/themes/factory/sources/source_red.png" id="9_source_red"]
 [ext_resource type="Texture2D" uid="uid://pch2b4h5uyb5" path="res://assets/themes/factory/sources/source_blue.png" id="10_source_blue"]
 [ext_resource type="Texture2D" uid="uid://c1j0aok800l71" path="res://assets/themes/factory/bins/bin_red.png" id="13_bin_red"]
@@ -16,6 +15,8 @@
 [ext_resource type="Texture2D" uid="uid://5bqvkj51nun2" path="res://assets/ui/buttons/retry_button.png" id="18_retry_button"]
 [ext_resource type="PackedScene" path="res://scenes/components/bin.tscn" id="19_bin_scene"]
 [ext_resource type="PackedScene" path="res://scenes/components/junction.tscn" id="20_junction_scene"]
+[ext_resource type="Texture2D" uid="uid://cdbenhqnoctim" path="res://assets/themes/factory/conveyors/conveyor_bend_45.png" id="24_bend"]
+[ext_resource type="Texture2D" uid="uid://cxt0yogwftc25" path="res://assets/themes/factory/conveyors/conveyor_split_42.png" id="25_split"]
 
 [sub_resource type="Curve2D" id="Curve2D_red_inbound"]
 _data = {
@@ -56,71 +57,99 @@ texture = ExtResource("6_board")
 [node name="Conveyors" type="Node2D" parent="." unique_id=568993667]
 z_index = -5
 
-[node name="RedInboundVisual" type="Node2D" parent="Conveyors" unique_id=1304021678]
-
-[node name="StraightSection" type="Sprite2D" parent="Conveyors/RedInboundVisual" unique_id=1659025165]
+[node name="RedInboundStraight" type="Sprite2D" parent="Conveyors" unique_id=1569065583]
 texture_filter = 1
-position = Vector2(180, 257.5)
-scale = Vector2(0.07863, 0.12926)
+position = Vector2(180, 210.9763)
+scale = Vector2(0.07863, 0.102114)
 texture = ExtResource("7_straight")
 
-[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/RedInboundVisual" unique_id=1645681112]
+[node name="RedInboundDiagonal" type="Sprite2D" parent="Conveyors" unique_id=804777297]
 texture_filter = 1
-position = Vector2(270, 435)
-rotation = -0.031
-scale = Vector2(0.166, 0.166)
-texture = ExtResource("8_diagonal")
-
-[node name="BlueInboundVisual" type="Node2D" parent="Conveyors" unique_id=1692955200]
-
-[node name="StraightSection" type="Sprite2D" parent="Conveyors/BlueInboundVisual" unique_id=655557480]
-texture_filter = 1
-position = Vector2(540, 257.5)
-scale = Vector2(0.07863, 0.12926)
+position = Vector2(298.9306, 459.1088)
+rotation = -0.876058
+scale = Vector2(0.07863, 0.131771)
 texture = ExtResource("7_straight")
 
-[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/BlueInboundVisual" unique_id=1265805229]
+[node name="BlueInboundStraight" type="Sprite2D" parent="Conveyors" unique_id=1121828077]
 texture_filter = 1
-position = Vector2(450, 435)
-rotation = 0.031
-scale = Vector2(-0.166, 0.166)
-texture = ExtResource("8_diagonal")
-
-[node name="JunctionExitVisual" type="Sprite2D" parent="Conveyors" unique_id=312128090]
-texture_filter = 1
-position = Vector2(360, 580)
-scale = Vector2(0.0786, 0.096)
+position = Vector2(540, 210.9763)
+scale = Vector2(0.07863, 0.102114)
 texture = ExtResource("7_straight")
 
-[node name="RedOutboundVisual" type="Node2D" parent="Conveyors" unique_id=1774244709]
-
-[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/RedOutboundVisual" unique_id=1153479740]
+[node name="BlueInboundDiagonal" type="Sprite2D" parent="Conveyors" unique_id=1781182476]
 texture_filter = 1
-position = Vector2(270, 750)
-rotation = -0.111
-scale = Vector2(-0.15, 0.15)
-texture = ExtResource("8_diagonal")
-
-[node name="StraightSection" type="Sprite2D" parent="Conveyors/RedOutboundVisual" unique_id=302622468]
-texture_filter = 1
-position = Vector2(180, 978.5)
-scale = Vector2(0.07863, 0.16204)
+position = Vector2(421.0694, 459.1088)
+rotation = 0.876058
+scale = Vector2(0.07863, 0.131771)
 texture = ExtResource("7_straight")
 
-[node name="BlueOutboundVisual" type="Node2D" parent="Conveyors" unique_id=1715009066]
-
-[node name="DiagonalSection" type="Sprite2D" parent="Conveyors/BlueOutboundVisual" unique_id=1733936060]
+[node name="JunctionExit" type="Sprite2D" parent="Conveyors" unique_id=844476073]
 texture_filter = 1
-position = Vector2(450, 750)
-rotation = 0.111
-scale = Vector2(0.15, 0.15)
-texture = ExtResource("8_diagonal")
-
-[node name="StraightSection" type="Sprite2D" parent="Conveyors/BlueOutboundVisual" unique_id=2016401175]
-texture_filter = 1
-position = Vector2(540, 978.5)
-scale = Vector2(0.07863, 0.16204)
+position = Vector2(360, 546.3298)
+scale = Vector2(0.07863, 0.077339)
 texture = ExtResource("7_straight")
+
+[node name="RedOutboundDiagonal" type="Sprite2D" parent="Conveyors" unique_id=1336099336]
+texture_filter = 1
+position = Vector2(276.4627, 742.8192)
+rotation = 0.732815
+scale = Vector2(0.07863, 0.096027)
+texture = ExtResource("7_straight")
+
+[node name="RedOutboundStraight" type="Sprite2D" parent="Conveyors" unique_id=1528605888]
+texture_filter = 1
+position = Vector2(180, 1016.1592)
+scale = Vector2(0.07863, 0.146079)
+texture = ExtResource("7_straight")
+
+[node name="BlueOutboundDiagonal" type="Sprite2D" parent="Conveyors" unique_id=1734133721]
+texture_filter = 1
+position = Vector2(443.9034, 743.226)
+rotation = -0.732815
+scale = Vector2(0.07863, 0.095337)
+texture = ExtResource("7_straight")
+
+[node name="BlueOutboundStraight" type="Sprite2D" parent="Conveyors" unique_id=231078558]
+texture_filter = 1
+position = Vector2(540, 1016.1592)
+scale = Vector2(0.07863, 0.146079)
+texture = ExtResource("7_straight")
+
+[node name="Transitions" type="Node2D" parent="Conveyors" unique_id=1571241701]
+
+[node name="BendRedInbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=1573869021]
+texture_filter = 1
+position = Vector2(185.6305, 351.1466)
+rotation = -0.853679
+scale = Vector2(0.094303, 0.094303)
+texture = ExtResource("24_bend")
+
+[node name="BendBlueInbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=305972019]
+texture_filter = 1
+position = Vector2(534.3695, 351.1466)
+rotation = 0.853679
+scale = Vector2(-0.094303, 0.094303)
+texture = ExtResource("24_bend")
+
+[node name="BendRedOutbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=945832198]
+texture_filter = 1
+position = Vector2(190.2832, 847.9164)
+rotation = -0.049243
+scale = Vector2(0.094303, 0.094303)
+texture = ExtResource("24_bend")
+
+[node name="BendBlueOutbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=199375133]
+texture_filter = 1
+position = Vector2(529.7168, 847.9164)
+rotation = 0.049243
+scale = Vector2(-0.094303, 0.094303)
+texture = ExtResource("24_bend")
+
+[node name="SplitSection" type="Sprite2D" parent="Conveyors/Transitions" unique_id=1902733754]
+texture_filter = 1
+position = Vector2(360.2737, 652.4538)
+scale = Vector2(0.091221, 0.091221)
+texture = ExtResource("25_split")
 
 [node name="Sources" type="Node2D" parent="." unique_id=1352065766]
 z_index = -3
