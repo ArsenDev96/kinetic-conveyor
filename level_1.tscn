@@ -17,6 +17,11 @@
 [ext_resource type="PackedScene" path="res://scenes/components/junction.tscn" id="20_junction_scene"]
 [ext_resource type="Texture2D" uid="uid://bmr5moelc27wp" path="res://assets/themes/factory/conveyors/conveyor_bend_45_v2.png" id="24_bend"]
 [ext_resource type="Texture2D" uid="uid://bkd1st34jky85" path="res://assets/themes/factory/conveyors/conveyor_split_42_v2.png" id="25_split"]
+[ext_resource type="Shader" path="res://conveyor_tread.gdshader" id="26_tread_shader"]
+[ext_resource type="Texture2D" uid="uid://d1gk3nq4wgwv7" path="res://assets/themes/factory/conveyors/masks/conveyor_straight_v2_tread_mask.png" id="27_mask_straight"]
+[ext_resource type="Texture2D" uid="uid://udv8gv3kau3o" path="res://assets/themes/factory/conveyors/masks/conveyor_bend_45_v2_tread_mask.png" id="28_mask_bend"]
+[ext_resource type="Texture2D" uid="uid://2ewyda2atwbt" path="res://assets/themes/factory/conveyors/masks/conveyor_split_42_v2_tread_mask.png" id="29_mask_split"]
+[ext_resource type="Texture2D" uid="uid://clfy2o4dhisur" path="res://assets/themes/factory/sources/masks/source_tread_mask.png" id="30_mask_source"]
 
 ; Route geometry is derived from the conveyor artwork, not the other way round.
 ; Every corner is a circular fillet whose radius matches the centreline arc the
@@ -31,6 +36,87 @@
 ; whose branches measure 42.773 deg from vertical. That angle splits the
 ; residual between the splitter branch and the v2 bend arm (44.782 deg),
 ; holding both pieces within 1.8 px of the travelled line.
+
+; Tread motion. One shader, five material instances. speed_tex is chosen per
+; asset as 77.5 / sprite_scale so every belt reads at the same ~77.5 px/s in
+; world space despite the three source resolutions. wrap_tex is the measured rib
+; repeat of each texture, so the modulo sample lands on an identical rib.
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_straight"]
+shader = ExtResource("26_tread_shader")
+shader_parameter/tex_size = Vector2(724, 2172)
+shader_parameter/mode = 0
+shader_parameter/speed_tex = 640.71
+shader_parameter/wrap_tex = 123.0
+shader_parameter/dir_sign = 1.0
+shader_parameter/blend_frac = 0.3
+shader_parameter/valid_min = -100000.0
+shader_parameter/valid_max = 100000.0
+shader_parameter/tread_mask = ExtResource("27_mask_straight")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_bend_down"]
+shader = ExtResource("26_tread_shader")
+shader_parameter/tex_size = Vector2(1254, 1254)
+shader_parameter/mode = 1
+shader_parameter/speed_tex = 528.99
+shader_parameter/wrap_tex = 106.0
+shader_parameter/dir_sign = 1.0
+shader_parameter/blend_frac = 0.3
+shader_parameter/arc_o = Vector2(989.5, 806.5)
+shader_parameter/arc_r = 455.0
+shader_parameter/tan_v = Vector2(534.5, 806.5)
+shader_parameter/tan_d = Vector2(666.5, 486)
+shader_parameter/arm_alpha = 0.789203
+shader_parameter/len_diag = 468.4
+shader_parameter/len_arc = 355.63
+shader_parameter/len_vert = 429.5
+shader_parameter/tread_mask = ExtResource("28_mask_bend")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_bend_up"]
+shader = ExtResource("26_tread_shader")
+shader_parameter/tex_size = Vector2(1254, 1254)
+shader_parameter/mode = 1
+shader_parameter/speed_tex = 528.99
+shader_parameter/wrap_tex = 106.0
+shader_parameter/dir_sign = -1.0
+shader_parameter/blend_frac = 0.3
+shader_parameter/arc_o = Vector2(989.5, 806.5)
+shader_parameter/arc_r = 455.0
+shader_parameter/tan_v = Vector2(534.5, 806.5)
+shader_parameter/tan_d = Vector2(666.5, 486)
+shader_parameter/arm_alpha = 0.789203
+shader_parameter/len_diag = 468.4
+shader_parameter/len_arc = 355.63
+shader_parameter/len_vert = 429.5
+shader_parameter/tread_mask = ExtResource("28_mask_bend")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_split"]
+shader = ExtResource("26_tread_shader")
+shader_parameter/tex_size = Vector2(1254, 1254)
+shader_parameter/mode = 2
+shader_parameter/speed_tex = 354.95
+shader_parameter/wrap_tex = 75.0
+shader_parameter/dir_sign = 1.0
+shader_parameter/blend_frac = 0.3
+shader_parameter/valid_min = 176.0
+shader_parameter/valid_max = 100000.0
+shader_parameter/pivot = Vector2(627.36, 619.98)
+shader_parameter/branch_th = 0.74654
+shader_parameter/fan_x = 70.0
+shader_parameter/fan_y = 110.0
+shader_parameter/tread_mask = ExtResource("29_mask_split")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_source"]
+shader = ExtResource("26_tread_shader")
+shader_parameter/tex_size = Vector2(1774, 887)
+shader_parameter/mode = 0
+shader_parameter/speed_tex = 572.84
+shader_parameter/wrap_tex = 120.0
+shader_parameter/dir_sign = 1.0
+shader_parameter/blend_frac = 0.3
+shader_parameter/valid_min = 398.0
+shader_parameter/valid_max = 100000.0
+shader_parameter/tread_mask = ExtResource("30_mask_source")
 
 [sub_resource type="Curve2D" id="Curve2D_red_inbound"]
 _data = {
@@ -75,6 +161,7 @@ z_index = -5
 texture_filter = 1
 position = Vector2(180, 222.5)
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 600, 724, 951)
@@ -83,6 +170,7 @@ region_rect = Rect2(0, 600, 724, 951)
 texture_filter = 1
 position = Vector2(540, 222.5)
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 600, 724, 951)
@@ -92,6 +180,7 @@ texture_filter = 1
 position = Vector2(286.352, 465.817)
 rotation = -0.781593
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 700, 724, 975)
@@ -101,6 +190,7 @@ texture_filter = 1
 position = Vector2(433.648, 465.817)
 rotation = 0.781593
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 700, 724, 975)
@@ -110,6 +200,7 @@ texture_filter = 1
 position = Vector2(266.32, 797.91)
 rotation = 0.763179
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 800, 724, 653)
@@ -119,6 +210,7 @@ texture_filter = 1
 position = Vector2(453.68, 797.91)
 rotation = -0.763179
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 800, 724, 653)
@@ -127,6 +219,7 @@ region_rect = Rect2(0, 800, 724, 653)
 texture_filter = 1
 position = Vector2(180, 1050.5)
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 400, 724, 1348)
@@ -135,6 +228,7 @@ region_rect = Rect2(0, 400, 724, 1348)
 texture_filter = 1
 position = Vector2(540, 1050.5)
 scale = Vector2(0.1209608, 0.1209608)
+material = SubResource("ShaderMaterial_tread_straight")
 texture = ExtResource("7_straight")
 region_enabled = true
 region_rect = Rect2(0, 400, 724, 1348)
@@ -143,24 +237,28 @@ region_rect = Rect2(0, 400, 724, 1348)
 
 [node name="BendRedInbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=1573869021]
 texture_filter = 1
+material = SubResource("ShaderMaterial_tread_bend_up")
 position = Vector2(193.552, 357.46)
 scale = Vector2(0.1465048, -0.1465048)
 texture = ExtResource("24_bend")
 
 [node name="BendBlueInbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=305972019]
 texture_filter = 1
+material = SubResource("ShaderMaterial_tread_bend_up")
 position = Vector2(526.448, 357.46)
 scale = Vector2(-0.1465048, -0.1465048)
 texture = ExtResource("24_bend")
 
 [node name="BendRedOutbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=945832198]
 texture_filter = 1
+material = SubResource("ShaderMaterial_tread_bend_down")
 position = Vector2(193.552, 889.455)
 scale = Vector2(0.1465048, 0.1465048)
 texture = ExtResource("24_bend")
 
 [node name="BendBlueOutbound" type="Sprite2D" parent="Conveyors/Transitions" unique_id=199375133]
 texture_filter = 1
+material = SubResource("ShaderMaterial_tread_bend_down")
 position = Vector2(526.448, 889.455)
 scale = Vector2(-0.1465048, 0.1465048)
 texture = ExtResource("24_bend")
@@ -170,6 +268,7 @@ texture_filter = 1
 position = Vector2(359.921, 701.533)
 rotation = 0.001676
 scale = Vector2(0.21834, 0.21834)
+material = SubResource("ShaderMaterial_tread_split")
 texture = ExtResource("25_split")
 
 [node name="Sources" type="Node2D" parent="." unique_id=1352065766]
@@ -181,6 +280,7 @@ z_index = -3
 texture_filter = 1
 position = Vector2(180, 155)
 scale = Vector2(0.13529, 0.13529)
+material = SubResource("ShaderMaterial_tread_source")
 texture = ExtResource("9_source_red")
 
 [node name="BlueSourceVisual" type="Node2D" parent="Sources" unique_id=1719616704]
@@ -189,6 +289,7 @@ texture = ExtResource("9_source_red")
 texture_filter = 1
 position = Vector2(540, 155)
 scale = Vector2(0.13529, 0.13529)
+material = SubResource("ShaderMaterial_tread_source")
 texture = ExtResource("10_source_blue")
 
 [node name="Junction" parent="." unique_id=1067793483 instance=ExtResource("20_junction_scene")]
