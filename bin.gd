@@ -1,3 +1,4 @@
+@tool
 extends Node2D
 
 ## Delivery target. `accepted_color` is the gameplay rule input and is never
@@ -17,6 +18,14 @@ const WRONG_TINT_IN_DURATION := 0.05
 const WRONG_TINT_OUT_DURATION := 0.13
 
 @export var accepted_color: BlockTypes.BlockColor = BlockTypes.BlockColor.RED
+## Art for this bin. Both presentation layers deliberately share one texture:
+## the front layer re-draws the texture's lower region on top of the back layer
+## so a delivered block sinks behind the rim. Purely cosmetic - the gameplay
+## rule reads `accepted_color`, never this.
+@export var bin_texture: Texture2D:
+	set(value):
+		bin_texture = value
+		_apply_bin_texture()
 
 var _base_position: Vector2
 var _base_scale: Vector2
@@ -24,12 +33,24 @@ var _base_modulate: Color
 var _transform_tween: Tween
 var _tint_tween: Tween
 @onready var bin_visual: Node2D = $BinVisual
+@onready var _back_layer: Sprite2D = $BinVisual/BinBackLayer
+@onready var _front_layer: Sprite2D = $BinVisual/BinFrontLayer
 
 
 func _ready() -> void:
+	_apply_bin_texture()
 	_base_position = bin_visual.position
 	_base_scale = bin_visual.scale
 	_base_modulate = bin_visual.modulate
+
+
+# The exported texture is assigned during scene load, before the layer nodes
+# exist, so the setter is a no-op until _ready() applies it for real.
+func _apply_bin_texture() -> void:
+	if not is_node_ready() or bin_texture == null:
+		return
+	_back_layer.texture = bin_texture
+	_front_layer.texture = bin_texture
 
 
 func react_correct() -> void:

@@ -5,8 +5,8 @@ enum RoundState { PLAYING, WON, LOST }
 ## was already over, so the delivery changed nothing and must not be reacted to.
 enum DeliveryOutcome { IGNORED, CORRECT, WRONG }
 
-const FEEDBACK_CORRECT_TEXTURE := preload("res://assets/ui/feedback_correct.png")
-const FEEDBACK_WRONG_TEXTURE := preload("res://assets/ui/feedback_wrong.png")
+const FEEDBACK_CORRECT_TEXTURE := preload("res://assets/ui/feedback/feedback_correct.png")
+const FEEDBACK_WRONG_TEXTURE := preload("res://assets/ui/feedback/feedback_wrong.png")
 
 # Long enough for the final block's ~0.28 s landing animation to read before the
 # overlay covers the board.

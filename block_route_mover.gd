@@ -1,7 +1,7 @@
 extends PathFollow2D
 
-const BLOCK_RED_TEXTURE := preload("res://assets/gameplay/blocks/block_red.png")
-const BLOCK_BLUE_TEXTURE := preload("res://assets/gameplay/blocks/block_blue.png")
+const BLOCK_RED_TEXTURE := preload("res://assets/themes/factory/blocks/block_red.png")
+const BLOCK_BLUE_TEXTURE := preload("res://assets/themes/factory/blocks/block_blue.png")
 
 # Landing presentation. Only BlockVisual is animated: the PathFollow2D keeps the
 # progress the gameplay path gave it, so the delivery point never moves.
