@@ -42,7 +42,7 @@ z_index = 0
 script = ExtResource("1_junction_controller")
 
 [node name="JunctionVisual" type="Node2D" parent="."]
-scale = Vector2(1.2, 1.2)
+scale = Vector2(1.4, 1.4)
 
 [node name="JunctionMainV2" type="Sprite2D" parent="JunctionVisual"]
 texture_filter = 1
@@ -55,7 +55,7 @@ offset = Vector2(-656, -624)
 
 [node name="GatePivot" type="Node2D" parent="JunctionVisual"]
 z_index = 1
-scale = Vector2(0.91667, 0.91667)
+scale = Vector2(0.78571, 0.78571)
 
 [node name="JunctionGateV2" type="Sprite2D" parent="JunctionVisual/GatePivot"]
 texture_filter = 1
