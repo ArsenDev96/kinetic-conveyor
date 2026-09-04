@@ -16,12 +16,12 @@
 [ext_resource type="PackedScene" path="res://scenes/components/bin.tscn" id="19_bin_scene"]
 [ext_resource type="PackedScene" path="res://scenes/components/junction.tscn" id="20_junction_scene"]
 [ext_resource type="Texture2D" uid="uid://bmr5moelc27wp" path="res://assets/themes/factory/conveyors/conveyor_bend_45_v2.png" id="24_bend"]
-[ext_resource type="Texture2D" uid="uid://bkd1st34jky85" path="res://assets/themes/factory/conveyors/conveyor_split_42_v2.png" id="25_split"]
+[ext_resource type="Texture2D" uid="uid://bn5w3jrjl12v3" path="res://assets/themes/factory/conveyors/conveyor_split_42_v2.png" id="25_split"]
 [ext_resource type="Shader" path="res://conveyor_tread.gdshader" id="26_tread_shader"]
-[ext_resource type="Texture2D" uid="uid://d1gk3nq4wgwv7" path="res://assets/themes/factory/conveyors/masks/conveyor_straight_v2_tread_mask.png" id="27_mask_straight"]
-[ext_resource type="Texture2D" uid="uid://udv8gv3kau3o" path="res://assets/themes/factory/conveyors/masks/conveyor_bend_45_v2_tread_mask.png" id="28_mask_bend"]
-[ext_resource type="Texture2D" uid="uid://2ewyda2atwbt" path="res://assets/themes/factory/conveyors/masks/conveyor_split_42_v2_tread_mask.png" id="29_mask_split"]
-[ext_resource type="Texture2D" uid="uid://clfy2o4dhisur" path="res://assets/themes/factory/sources/masks/source_tread_mask.png" id="30_mask_source"]
+[ext_resource type="Texture2D" uid="uid://3gltxw62dd5q" path="res://assets/themes/factory/conveyors/masks/conveyor_straight_v2_tread_mask.png" id="27_mask_straight"]
+[ext_resource type="Texture2D" uid="uid://pv8cnhl6ulyl" path="res://assets/themes/factory/conveyors/masks/conveyor_bend_45_v2_tread_mask.png" id="28_mask_bend"]
+[ext_resource type="Texture2D" uid="uid://cjf26jw6uu8ye" path="res://assets/themes/factory/conveyors/masks/conveyor_split_42_v2_tread_mask.png" id="29_mask_split"]
+[ext_resource type="Texture2D" uid="uid://c0ti66cw1o8p5" path="res://assets/themes/factory/sources/masks/source_tread_mask.png" id="30_mask_source"]
 
 ; Route geometry is derived from the conveyor artwork, not the other way round.
 ; Every corner is a circular fillet whose radius matches the centreline arc the
