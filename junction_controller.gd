@@ -27,8 +27,8 @@ var _rotation_tween: Tween
 var _press_tween: Tween
 var _pulse_tween: Tween
 @onready var junction_visual: Node2D = $JunctionVisual
-@onready var direction_marker: Node2D = $JunctionVisual/DirectionMarker
-@onready var direction_arrow: Sprite2D = $JunctionVisual/DirectionMarker/DirectionArrow
+@onready var direction_marker: Node2D = $JunctionVisual/GatePivot
+@onready var direction_arrow: Sprite2D = $JunctionVisual/GatePivot/JunctionGateV2
 
 
 func _ready() -> void:
