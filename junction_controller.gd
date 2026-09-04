@@ -12,6 +12,12 @@ const ROTATION_DURATION := 0.18
 const PULSE_BRIGHTNESS := 1.35
 const PULSE_IN_DURATION := 0.1
 const PULSE_OUT_DURATION := 0.15
+# Route-capture confirmation: a small, distinct "click" reaction on the gate
+# itself, separate from the toggle pulse above so the two never fight over
+# the same tween. Scale-based (toggle uses modulate), ~100ms total.
+const CAPTURE_PULSE_SCALE := 1.14
+const CAPTURE_PULSE_IN_DURATION := 0.045
+const CAPTURE_PULSE_OUT_DURATION := 0.055
 
 @export var initial_route: Route = Route.LEFT
 
@@ -23,9 +29,11 @@ var interaction_enabled := true
 var _last_toggle_time := -1000
 var _base_arrow_modulate := Color.WHITE
 var _pulse_arrow_modulate := Color.WHITE
+var _base_arrow_scale := Vector2.ONE
 var _rotation_tween: Tween
 var _press_tween: Tween
 var _pulse_tween: Tween
+var _capture_pulse_tween: Tween
 @onready var junction_visual: Node2D = $JunctionVisual
 @onready var direction_marker: Node2D = $JunctionVisual/GatePivot
 @onready var direction_arrow: Sprite2D = $JunctionVisual/GatePivot/JunctionGateV2
@@ -33,6 +41,7 @@ var _pulse_tween: Tween
 
 func _ready() -> void:
 	_base_arrow_modulate = direction_arrow.modulate
+	_base_arrow_scale = direction_arrow.scale
 	_pulse_arrow_modulate = Color(
 		_base_arrow_modulate.r * PULSE_BRIGHTNESS,
 		_base_arrow_modulate.g * PULSE_BRIGHTNESS,
@@ -40,6 +49,13 @@ func _ready() -> void:
 		_base_arrow_modulate.a
 	)
 	current_route = initial_route
+
+
+# Authoritative world-space position of the physical gate pivot. Blocks use
+# this - not a hardcoded coordinate - to decide when their route locks in, so
+# gameplay stays correct even if the Junction's geometry is ever adjusted.
+func gate_pivot_global_position() -> Vector2:
+	return direction_marker.global_position
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
@@ -117,3 +133,19 @@ func _play_arrow_pulse() -> void:
 	_pulse_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_pulse_tween.tween_property(direction_arrow, "modulate", _pulse_arrow_modulate, PULSE_IN_DURATION)
 	_pulse_tween.tween_property(direction_arrow, "modulate", _base_arrow_modulate, PULSE_OUT_DURATION)
+
+
+# Called once per block, at the exact frame its route locks in. Independent
+# of _play_arrow_pulse (different property, different tween var) so a route
+# capture and a player's toggle tap can never stomp each other's animation.
+# Always resets to the cached base scale before animating, so repeated
+# captures in quick succession cannot accumulate drift.
+func play_route_capture_pulse() -> void:
+	if _capture_pulse_tween != null:
+		_capture_pulse_tween.kill()
+	direction_arrow.scale = _base_arrow_scale
+	_capture_pulse_tween = create_tween()
+	_capture_pulse_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_capture_pulse_tween.tween_property(direction_arrow, "scale", _base_arrow_scale * CAPTURE_PULSE_SCALE, CAPTURE_PULSE_IN_DURATION)
+	_capture_pulse_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_capture_pulse_tween.tween_property(direction_arrow, "scale", _base_arrow_scale, CAPTURE_PULSE_OUT_DURATION)
