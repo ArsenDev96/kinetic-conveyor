@@ -14,6 +14,18 @@ signal delivered(block)
 const COLOUR_RED := 0
 const COLOUR_BLUE := 1
 
+## Delivery presentation. The PathFollow2D keeps the progress the path gave it,
+## so the delivery point never moves; only the sprite animates.
+const DELIVERY_HOLD := 0.2
+const SQUASH_SCALE := Vector2(1.12, 0.88)
+const SQUASH_DURATION := 0.06
+const REJECT_STRETCH := Vector2(0.94, 1.06)
+const REJECT_BOUNCE_PX := 6.0
+const REJECT_UP_DURATION := 0.07
+const REJECT_DOWN_DURATION := 0.09
+const VANISH_SCALE := 0.12
+const VANISH_DURATION := 0.3
+
 var colour: int = COLOUR_RED
 var speed: float = 100.0
 var route_locked: bool = false
@@ -69,11 +81,30 @@ func _lock_sprite_upright() -> void:
 	_sprite.rotation = -rotation
 
 
-## Hold at the pad centre, then shrink and fade out before freeing.
-func play_delivery_finish() -> void:
+## Hold at the pad centre, react to the verdict, then shrink and fade out.
+## Correct: a subtle squash. Wrong: a tiny upward rejection bounce.
+## The cube keeps its z-order the whole time, so nothing ever covers it.
+func play_delivery_finish(correct: bool) -> void:
+	var base_scale: Vector2 = _sprite.scale
 	var tw: Tween = create_tween()
-	tw.tween_interval(0.2)
-	tw.tween_property(_sprite, "scale", _sprite.scale * 0.12, 0.3) \
+	tw.tween_interval(DELIVERY_HOLD)
+	if correct:
+		tw.tween_property(_sprite, "scale", base_scale * SQUASH_SCALE, SQUASH_DURATION) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	else:
+		tw.tween_method(_set_screen_lift, 0.0, -REJECT_BOUNCE_PX, REJECT_UP_DURATION) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(_sprite, "scale", base_scale * REJECT_STRETCH, REJECT_UP_DURATION)
+		tw.tween_method(_set_screen_lift, -REJECT_BOUNCE_PX, 0.0, REJECT_DOWN_DURATION) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.parallel().tween_property(_sprite, "scale", base_scale, REJECT_DOWN_DURATION)
+	tw.tween_property(_sprite, "scale", base_scale * VANISH_SCALE, VANISH_DURATION) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tw.parallel().tween_property(_sprite, "modulate:a", 0.0, 0.3)
+	tw.parallel().tween_property(_sprite, "modulate:a", 0.0, VANISH_DURATION)
 	tw.tween_callback(queue_free)
+
+
+## Screen-space vertical lift of the sprite, expressed in the parent's rotated
+## frame so "up" stays up on every route.
+func _set_screen_lift(y: float) -> void:
+	_sprite.position = Vector2(0.0, y).rotated(-rotation)
