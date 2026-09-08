@@ -41,11 +41,6 @@ const BEAM_CORE_LEFT := Color(1, 0.42, 0.34, 0.3)
 const BEAM_GLOW_LEFT := Color(1, 0.38, 0.29, 0.2)
 const BEAM_CORE_RIGHT := Color(0.44, 0.66, 1, 0.3)
 const BEAM_GLOW_RIGHT := Color(0.38, 0.6, 1, 0.2)
-## Route flow chevrons ride the selected arm at belt speed, evenly spaced over
-## the same trimmed span as the beam, fading in and out over FLOW_FADE px.
-const FLOW_LEFT := Color(1, 0.7, 0.45, 0.95)
-const FLOW_RIGHT := Color(0.6, 0.82, 1, 0.95)
-const FLOW_FADE := 40.0
 ## Trim, re-measured on the current machine art about the true chamber centre
 ## (359.68, 659.56): the dark Junction disc ends at r 59, the silver rim at r 72
 ## and the yellow chamber segments at r 83, while the tread first becomes visible
@@ -109,6 +104,14 @@ const PLATE_ANGLE_RIGHT := -0.70699
 const PLATE_SWING := 0.28
 ## Destination reactions.
 const DELIVERY_HOLD := 0.2
+## The block vanishes deep inside the bin, where a burst would be lost against
+## the dark interior, so the particles sit this far above it - at the bin mouth,
+## popping up over the rim where they read.
+const DELIVERY_FX_LIFT_PX := 44.0
+## The block that ends the round still has its chime or its clunk landing with
+## the station reaction one DELIVERY_HOLD later, so the result sting waits for
+## it instead of talking over it. The overlay itself is not delayed.
+const RESULT_STING_DELAY := DELIVERY_HOLD + 0.08
 const STATION_PULSE_SCALE := 1.025
 const STATION_TINT_RED := Color(1.55, 1.25, 1.2, 1.0)
 const STATION_TINT_BLUE := Color(1.2, 1.32, 1.6, 1.0)
@@ -132,10 +135,6 @@ var _capture_offset := 0.0
 var _spawn_timer := 0.0
 var _last_tap_ms := -10000
 var _has_tapped := false
-var _flow_path: Path2D
-var _flow_start := 0.0
-var _flow_end := 0.0
-var _flow_t := 0.0
 
 ## Motion rig: authored/base values of every animated property, captured once
 ## in _ready(). Every effect restores its node to these values before it starts
@@ -147,13 +146,15 @@ var _fx: Dictionary = {}
 @onready var _input_path: Path2D = $MovementPaths/InputPath
 @onready var _left_path: Path2D = $MovementPaths/LeftOutputPath
 @onready var _right_path: Path2D = $MovementPaths/RightOutputPath
+## Delivery bursts, parked just above the two delivery points in _place_delivery_fx().
+@onready var _burst_red: CPUParticles2D = $DeliveryFx/CorrectBurstRed
+@onready var _burst_blue: CPUParticles2D = $DeliveryFx/CorrectBurstBlue
 @onready var _junction_area: Area2D = $JunctionInput
 @onready var _junction_shape: CollisionShape2D = $JunctionInput/JunctionShape
 @onready var _left_glow: Sprite2D = $MachineVisual/ArrowLeft
 @onready var _right_glow: Sprite2D = $MachineVisual/ArrowRight
 @onready var _route_beam: Line2D = $RouteIndicators/RouteBeam
 @onready var _route_glow: Line2D = $RouteIndicators/RouteBeamGlow
-@onready var _route_flow: Node2D = $RouteIndicators/RouteFlow
 @onready var _tap_ring: Line2D = $RouteIndicators/JunctionTapRing
 @onready var _tap_hint: Label = $RouteIndicators/TapHint
 @onready var _tap_ripple: Node2D = $RouteIndicators/TapRipple
@@ -186,6 +187,7 @@ func _ready() -> void:
 	_retry_button.pressed.connect(_on_retry_pressed)
 	_result_overlay.visible = false
 	_setup_motion_rig()
+	_place_delivery_fx()
 	_apply_route_indicator(false)
 	_start_attention_loops()
 	_start_beacon_idle()
@@ -193,7 +195,6 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_update_route_flow(delta)
 	if round_state != STATE_PLAYING:
 		return
 	if spawned_count >= TOTAL_BLOCKS:
@@ -223,6 +224,7 @@ func _spawn_block() -> void:
 	spawned_count += 1
 	_update_hud()
 	_play_spawn_feedback()
+	GameFeel.event(&"block_spawn")
 
 
 ## Reached JUNCTION_CENTER. Read the junction state exactly once, store it,
@@ -303,6 +305,7 @@ func _try_toggle() -> void:
 func toggle_route() -> void:
 	junction_route = ROUTE_RIGHT if junction_route == ROUTE_LEFT else ROUTE_LEFT
 	_apply_route_indicator(true)
+	GameFeel.event(&"junction_switch")
 	if not _has_tapped:
 		_has_tapped = true
 		_dismiss_hint()
@@ -328,11 +331,6 @@ func _apply_route_indicator(pulse: bool) -> void:
 	_route_glow.points = beam_points
 	_route_beam.default_color = BEAM_CORE_LEFT if left_active else BEAM_CORE_RIGHT
 	_route_glow.default_color = BEAM_GLOW_LEFT if left_active else BEAM_GLOW_RIGHT
-	_flow_path = active_path
-	_flow_start = active_path.curve.get_closest_offset(beam_points[0] - active_path.position)
-	_flow_end = active_path.curve.get_closest_offset(beam_points[-1] - active_path.position)
-	for chevron in _route_flow.get_children():
-		chevron.default_color = FLOW_LEFT if left_active else FLOW_RIGHT
 	_apply_station_selection(left_active, pulse)
 	_steer_plate(left_active, pulse)
 	if pulse:
@@ -552,31 +550,6 @@ func _play_junction_tap_feedback(left_active: bool) -> void:
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
-## Gentle warm throb on whichever arrow is currently selected. Always starts
-## from the cached base modulate, so repeated toggles cannot accumulate.
-
-## Slides the chevrons along the active arm. Alpha fades over FLOW_FADE px at
-## both ends of the span so they appear from the chamber and sink into the bin.
-func _update_route_flow(delta: float) -> void:
-	if _flow_path == null:
-		return
-	var span := _flow_end - _flow_start
-	if span <= 0.0:
-		return
-	_flow_t = fmod(_flow_t + BLOCK_SPEED * delta, span)
-	var curve := _flow_path.curve
-	var chevrons := _route_flow.get_children()
-	for i in chevrons.size():
-		var chevron: Line2D = chevrons[i]
-		var along := fmod(_flow_t + span * float(i) / float(chevrons.size()), span)
-		var o := _flow_start + along
-		var p := curve.sample_baked(o)
-		var ahead := curve.sample_baked(minf(o + 4.0, _flow_end))
-		chevron.position = _flow_path.position + p
-		chevron.rotation = (ahead - p).angle()
-		chevron.modulate.a = clampf(minf(along, span - along) / FLOW_FADE, 0.0, 1.0)
-
-
 ## The lamps are the painted arrows on the housing, drawn through their masks:
 ## lit is the artwork itself (with the idle throb and tap punch on `modulate`),
 ## unlit darkens it through self_modulate so the two never share a property.
@@ -584,6 +557,8 @@ func _set_lamp(lamp: Sprite2D, lit: bool) -> void:
 	lamp.self_modulate = Color(1, 1, 1, 1) if lit else LAMP_UNLIT
 
 
+## Gentle warm throb on whichever arrow is currently selected. Always starts
+## from the cached base modulate, so repeated toggles cannot accumulate.
 func _start_arrow_idle(arrow: Sprite2D) -> void:
 	_fx_kill("arrow_idle")
 	_restore(_left_glow)
@@ -637,6 +612,9 @@ func _play_station_reaction(station: Sprite2D, correct: bool) -> void:
 	var base_pos: Vector2 = _base[station]["position"]
 	var tw := _fx_tween(key)
 	tw.tween_interval(DELIVERY_HOLD)
+	# Sound, haptic and particles ride the station's own tween, so they land
+	# on the same frame as the tint or the shake rather than at arrival.
+	tw.tween_callback(_play_delivery_feedback.bind(station, correct))
 	if correct:
 		var tint: Color = STATION_TINT_RED if station == _station_red else STATION_TINT_BLUE
 		tw.tween_property(station, "modulate", tint, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -653,6 +631,34 @@ func _play_station_reaction(station: Sprite2D, correct: bool) -> void:
 		tw.tween_property(station, "position", base_pos + Vector2(dx * 0.55, 0), 0.05)
 		tw.tween_property(station, "position", base_pos + Vector2(-dx * 0.25, 0), 0.04)
 		tw.tween_property(station, "position", base_pos, 0.04)
+
+
+## Parks each burst on its own delivery point, read from the output curve, so the
+## particles appear exactly where the block vanishes and this never duplicates
+## the authored path geometry. Runs once; the emitters do not move again.
+func _place_delivery_fx() -> void:
+	var lift := Vector2(0.0, -DELIVERY_FX_LIFT_PX)
+	_burst_red.global_position = _delivery_point(_left_path) + lift
+	_burst_blue.global_position = _delivery_point(_right_path) + lift
+
+
+func _delivery_point(path: Path2D) -> Vector2:
+	return path.to_global(path.curve.sample_baked(path.curve.get_baked_length()))
+
+
+## Fired from the station tween, so it is already in step with the destination
+## reaction. Scoring happened at arrival and is untouched here.
+func _play_delivery_feedback(station: Sprite2D, correct: bool) -> void:
+	GameFeel.event(&"correct_delivery" if correct else &"wrong_delivery")
+	if not correct:
+		# No sparks on a rejection, deliberately. The reject bounce, the warn
+		# flash, the station shake, the clunk and the stronger haptic already say
+		# it; more importantly a second burst at the same bin mouth would rhyme
+		# with the correct one, blurring the very distinction this feedback
+		# exists to draw. The pop belongs to "accepted" alone.
+		return
+	var burst: CPUParticles2D = _burst_red if station == _station_red else _burst_blue
+	burst.restart()
 
 
 # ---- test support
@@ -727,13 +733,18 @@ func _show_result() -> void:
 	_tap_hint.visible = false
 	_hint_leader.visible = false
 	_tap_ripple.visible = false
-	_route_flow.visible = false
 	_result_title.text = "LEVEL COMPLETE" if round_state == STATE_WON else "OUT OF ORDER"
 	_result_summary.text = "Correct: %d / %d\nMistakes: %d" % [correct_count, TOTAL_BLOCKS, mistake_count]
 	_result_overlay.visible = true
+	# Bound to the autoload, not to this level, so the sting still lands if the
+	# player hits RETRY inside the delay and the scene is torn down.
+	var sting := &"level_complete" if round_state == STATE_WON else &"level_failed"
+	get_tree().create_timer(RESULT_STING_DELAY).timeout.connect(
+		GameFeel.event.bind(sting), CONNECT_ONE_SHOT)
 
 
 func _on_retry_pressed() -> void:
+	GameFeel.event(&"retry")
 	get_tree().change_scene_to_file("res://level_1_v3.tscn")
 
 
