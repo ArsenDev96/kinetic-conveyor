@@ -37,10 +37,15 @@ const TAP_DEBOUNCE_MS := 90
 ## feathered across their width in the scene, and their combined additive alpha
 ## peaks near 0.23, so the tread and its chevrons stay clearly readable. Neither
 ## layer may cover the Junction platform or reach into a bin.
-const BEAM_CORE_LEFT := Color(1, 0.42, 0.34, 0.13)
-const BEAM_GLOW_LEFT := Color(1, 0.38, 0.29, 0.1)
-const BEAM_CORE_RIGHT := Color(0.44, 0.66, 1, 0.13)
-const BEAM_GLOW_RIGHT := Color(0.38, 0.6, 1, 0.1)
+const BEAM_CORE_LEFT := Color(1, 0.42, 0.34, 0.3)
+const BEAM_GLOW_LEFT := Color(1, 0.38, 0.29, 0.2)
+const BEAM_CORE_RIGHT := Color(0.44, 0.66, 1, 0.3)
+const BEAM_GLOW_RIGHT := Color(0.38, 0.6, 1, 0.2)
+## Route flow chevrons ride the selected arm at belt speed, evenly spaced over
+## the same trimmed span as the beam, fading in and out over FLOW_FADE px.
+const FLOW_LEFT := Color(1, 0.7, 0.45, 0.95)
+const FLOW_RIGHT := Color(0.6, 0.82, 1, 0.95)
+const FLOW_FADE := 40.0
 ## Trim, re-measured on the current machine art about the true chamber centre
 ## (359.68, 659.56): the dark Junction disc ends at r 59, the silver rim at r 72
 ## and the yellow chamber segments at r 83, while the tread first becomes visible
@@ -77,8 +82,18 @@ const JUNCTION_PUNCH_OUT := 0.16
 const RING_IDLE_LOW := 0.78
 const RING_IDLE_HALF := 0.9
 const RING_PUNCH := Color(1.1, 1.02, 0.95, 1.7)
+## First-tap ripple: two rings expanding from the plate centre, r 22 -> 62 in
+## a 50-unit circle, so they always stay inside the silver rim (r 72). Half a
+## period apart; retired with the hint on the first tap.
+const RIPPLE_PERIOD := 1.2
+const RIPPLE_SCALE_MIN := 0.44
+const RIPPLE_SCALE_MAX := 1.24
+const RIPPLE_ALPHA := 1.0
 ## Selected arrow: gentle warm throb so the Junction itself carries the routing.
-const ARROW_IDLE_PEAK := 1.22
+const ARROW_IDLE_PEAK := 1.35
+const ARROW_IDLE_SCALE := 1.08
+## Unlit lamp: the painted yellow pulled down to a dark amber, still clearly a lamp.
+const LAMP_UNLIT := Color(0.42, 0.38, 0.34, 1.0)
 const ARROW_IDLE_HALF := 0.85
 ## Selected-destination accent, deliberately far weaker than a delivery pulse.
 const STATION_SELECT_RED := Color(1.6, 0.62, 0.55, 0.0)
@@ -117,6 +132,10 @@ var _capture_offset := 0.0
 var _spawn_timer := 0.0
 var _last_tap_ms := -10000
 var _has_tapped := false
+var _flow_path: Path2D
+var _flow_start := 0.0
+var _flow_end := 0.0
+var _flow_t := 0.0
 
 ## Motion rig: authored/base values of every animated property, captured once
 ## in _ready(). Every effect restores its node to these values before it starts
@@ -130,14 +149,15 @@ var _fx: Dictionary = {}
 @onready var _right_path: Path2D = $MovementPaths/RightOutputPath
 @onready var _junction_area: Area2D = $JunctionInput
 @onready var _junction_shape: CollisionShape2D = $JunctionInput/JunctionShape
-@onready var _left_glow: Polygon2D = $RouteIndicators/LeftArrowGlow
-@onready var _left_dim: Polygon2D = $RouteIndicators/LeftArrowDim
-@onready var _right_glow: Polygon2D = $RouteIndicators/RightArrowGlow
-@onready var _right_dim: Polygon2D = $RouteIndicators/RightArrowDim
+@onready var _left_glow: Sprite2D = $MachineVisual/ArrowLeft
+@onready var _right_glow: Sprite2D = $MachineVisual/ArrowRight
 @onready var _route_beam: Line2D = $RouteIndicators/RouteBeam
 @onready var _route_glow: Line2D = $RouteIndicators/RouteBeamGlow
+@onready var _route_flow: Node2D = $RouteIndicators/RouteFlow
 @onready var _tap_ring: Line2D = $RouteIndicators/JunctionTapRing
 @onready var _tap_hint: Label = $RouteIndicators/TapHint
+@onready var _tap_ripple: Node2D = $RouteIndicators/TapRipple
+@onready var _hint_leader: Node2D = $RouteIndicators/TapHintLeader
 @onready var _machine: Sprite2D = $MachineVisual
 @onready var _tread_input: Sprite2D = $MachineVisual/TreadInput
 @onready var _tread_left: Sprite2D = $MachineVisual/TreadLeft
@@ -173,6 +193,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_route_flow(delta)
 	if round_state != STATE_PLAYING:
 		return
 	if spawned_count >= TOTAL_BLOCKS:
@@ -289,10 +310,8 @@ func toggle_route() -> void:
 
 func _apply_route_indicator(pulse: bool) -> void:
 	var left_active := junction_route == ROUTE_LEFT
-	_left_glow.self_modulate.a = 1.0 if left_active else 0.0
-	_left_dim.self_modulate.a = 0.0 if left_active else 1.0
-	_right_glow.self_modulate.a = 0.0 if left_active else 1.0
-	_right_dim.self_modulate.a = 1.0 if left_active else 0.0
+	_set_lamp(_left_glow, left_active)
+	_set_lamp(_right_glow, not left_active)
 	# The band traces the actual active curve, so it can never disagree with it.
 	# It is trimmed at both ends: it begins past the Junction platform and its
 	# surrounding hardware, and stops above the bin rim, so it only ever lies on
@@ -309,6 +328,11 @@ func _apply_route_indicator(pulse: bool) -> void:
 	_route_glow.points = beam_points
 	_route_beam.default_color = BEAM_CORE_LEFT if left_active else BEAM_CORE_RIGHT
 	_route_glow.default_color = BEAM_GLOW_LEFT if left_active else BEAM_GLOW_RIGHT
+	_flow_path = active_path
+	_flow_start = active_path.curve.get_closest_offset(beam_points[0] - active_path.position)
+	_flow_end = active_path.curve.get_closest_offset(beam_points[-1] - active_path.position)
+	for chevron in _route_flow.get_children():
+		chevron.default_color = FLOW_LEFT if left_active else FLOW_RIGHT
 	_apply_station_selection(left_active, pulse)
 	_steer_plate(left_active, pulse)
 	if pulse:
@@ -347,14 +371,46 @@ func _start_attention_loops() -> void:
 
 	var hint_tw: Tween = create_tween().set_loops()
 	hint_tw.tween_property(_tap_hint, "modulate:a", 0.35, 0.7).set_trans(Tween.TRANS_SINE)
+	hint_tw.parallel().tween_property(_hint_leader, "modulate:a", 0.35, 0.7).set_trans(Tween.TRANS_SINE)
 	hint_tw.tween_property(_tap_hint, "modulate:a", 1.0, 0.7).set_trans(Tween.TRANS_SINE)
+	hint_tw.parallel().tween_property(_hint_leader, "modulate:a", 1.0, 0.7).set_trans(Tween.TRANS_SINE)
 	_fx["hint_idle"] = hint_tw
+	_start_tap_ripple()
+
+
+## Each ring grows from the plate centre and fades as it reaches the rim; the
+## second ring starts half a period later so the pulse never pauses.
+func _start_tap_ripple() -> void:
+	var rings := _tap_ripple.get_children()
+	for i in rings.size():
+		var ring: Line2D = rings[i]
+		var key := "ripple%d" % i
+		var tw := _fx_tween(key)
+		ring.modulate.a = 0.0
+		tw.tween_interval(RIPPLE_PERIOD * 0.5 * i)
+		tw.tween_callback(func(): _loop_ripple(ring, key))
+
+
+func _loop_ripple(ring: Line2D, key: String) -> void:
+	var tw := _fx_tween(key).set_loops()
+	tw.tween_property(ring, "scale", Vector2.ONE * RIPPLE_SCALE_MAX, RIPPLE_PERIOD) \
+		.from(Vector2.ONE * RIPPLE_SCALE_MIN).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(ring, "modulate:a", 0.0, RIPPLE_PERIOD) \
+		.from(RIPPLE_ALPHA).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 
 func _dismiss_hint() -> void:
+	_fx_kill("hint_idle")
+	for i in _tap_ripple.get_child_count():
+		_fx_kill("ripple%d" % i)
 	var tw: Tween = create_tween()
 	tw.tween_property(_tap_hint, "modulate:a", 0.0, 0.35)
-	tw.tween_callback(func(): _tap_hint.visible = false)
+	tw.parallel().tween_property(_hint_leader, "modulate:a", 0.0, 0.35)
+	tw.parallel().tween_property(_tap_ripple, "modulate:a", 0.0, 0.35)
+	tw.tween_callback(func():
+		_tap_hint.visible = false
+		_hint_leader.visible = false
+		_tap_ripple.visible = false)
 
 
 # ---------------------------------------------------------------- motion rig
@@ -369,6 +425,9 @@ func _setup_motion_rig() -> void:
 	_rig(_left_glow, ["position", "scale", "modulate"])
 	_rig(_right_glow, ["position", "scale", "modulate"])
 	_rig(_tap_ring, ["position", "self_modulate", "modulate", "width"])
+	for ring in _tap_ripple.get_children():
+		_rig(ring, ["scale", "modulate"])
+	_rig(_hint_leader, ["modulate"])
 	_rig(_route_beam, ["position", "modulate"])
 	_rig(_route_glow, ["position", "modulate"])
 	_rig(_source_body, ["position", "scale", "rotation", "modulate"])
@@ -458,7 +517,7 @@ func _play_junction_tap_feedback(left_active: bool) -> void:
 	_fx_kill("arrow_idle")
 	_restore(_left_glow)
 	_restore(_right_glow)
-	var arrow: Polygon2D = _left_glow if left_active else _right_glow
+	var arrow: Sprite2D = _left_glow if left_active else _right_glow
 	var punch := _fx_tween("arrow_punch")
 	punch.tween_property(arrow, "modulate", Color(1.75, 1.75, 1.75, 1.0), JUNCTION_PUNCH_IN) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -495,7 +554,37 @@ func _play_junction_tap_feedback(left_active: bool) -> void:
 
 ## Gentle warm throb on whichever arrow is currently selected. Always starts
 ## from the cached base modulate, so repeated toggles cannot accumulate.
-func _start_arrow_idle(arrow: Polygon2D) -> void:
+
+## Slides the chevrons along the active arm. Alpha fades over FLOW_FADE px at
+## both ends of the span so they appear from the chamber and sink into the bin.
+func _update_route_flow(delta: float) -> void:
+	if _flow_path == null:
+		return
+	var span := _flow_end - _flow_start
+	if span <= 0.0:
+		return
+	_flow_t = fmod(_flow_t + BLOCK_SPEED * delta, span)
+	var curve := _flow_path.curve
+	var chevrons := _route_flow.get_children()
+	for i in chevrons.size():
+		var chevron: Line2D = chevrons[i]
+		var along := fmod(_flow_t + span * float(i) / float(chevrons.size()), span)
+		var o := _flow_start + along
+		var p := curve.sample_baked(o)
+		var ahead := curve.sample_baked(minf(o + 4.0, _flow_end))
+		chevron.position = _flow_path.position + p
+		chevron.rotation = (ahead - p).angle()
+		chevron.modulate.a = clampf(minf(along, span - along) / FLOW_FADE, 0.0, 1.0)
+
+
+## The lamps are the painted arrows on the housing, drawn through their masks:
+## lit is the artwork itself (with the idle throb and tap punch on `modulate`),
+## unlit darkens it through self_modulate so the two never share a property.
+func _set_lamp(lamp: Sprite2D, lit: bool) -> void:
+	lamp.self_modulate = Color(1, 1, 1, 1) if lit else LAMP_UNLIT
+
+
+func _start_arrow_idle(arrow: Sprite2D) -> void:
 	_fx_kill("arrow_idle")
 	_restore(_left_glow)
 	_restore(_right_glow)
@@ -503,7 +592,11 @@ func _start_arrow_idle(arrow: Polygon2D) -> void:
 	tw.set_loops()
 	tw.tween_property(arrow, "modulate", Color(ARROW_IDLE_PEAK, ARROW_IDLE_PEAK, ARROW_IDLE_PEAK, 1.0), ARROW_IDLE_HALF) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(arrow, "scale", _base[arrow]["scale"] * ARROW_IDLE_SCALE, ARROW_IDLE_HALF) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(arrow, "modulate", Color(1, 1, 1, 1), ARROW_IDLE_HALF) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(arrow, "scale", _base[arrow]["scale"], ARROW_IDLE_HALF) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
@@ -581,9 +674,14 @@ func stop_idle_loops_for_test() -> void:
 	_fx_kill("beacon_idle")
 	_fx_kill("ring_idle")
 	_fx_kill("hint_idle")
+	for i in _tap_ripple.get_child_count():
+		_fx_kill("ripple%d" % i)
 	_fx_kill("arrow_idle")
 	_restore(_beacon)
 	_restore(_tap_ring)
+	for ring in _tap_ripple.get_children():
+		_restore(ring)
+	_restore(_hint_leader)
 	_restore(_left_glow)
 	_restore(_right_glow)
 
@@ -627,6 +725,9 @@ func _show_result() -> void:
 	_junction_area.input_pickable = false
 	_tap_ring.visible = false
 	_tap_hint.visible = false
+	_hint_leader.visible = false
+	_tap_ripple.visible = false
+	_route_flow.visible = false
 	_result_title.text = "LEVEL COMPLETE" if round_state == STATE_WON else "OUT OF ORDER"
 	_result_summary.text = "Correct: %d / %d\nMistakes: %d" % [correct_count, TOTAL_BLOCKS, mistake_count]
 	_result_overlay.visible = true

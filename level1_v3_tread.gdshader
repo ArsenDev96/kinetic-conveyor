@@ -13,8 +13,33 @@ shader_type canvas_item;
 // distance is taken modulo that repeat: the sample never leaves the belt and
 // the motion is a pure phase loop, so nothing can drift over time.
 //
+// All geometry is in texture pixels of level1_machine_base.png.
+
+uniform sampler2D tread_mask : filter_linear, repeat_disable;
+uniform vec2 region_origin = vec2(472.0, 177.0);
+uniform vec2 region_size = vec2(78.0, 526.0);
+uniform vec2 tex_size = vec2(1024.0, 1536.0);
+
+// Belt travel in texture px/s; apparent world speed = speed_tex * sprite scale.
+uniform float speed_tex = 121.875;
+// Rib pitch: the belt pattern repeats every this many texture px.
+uniform float wrap_tex = 49.5;
+uniform float blend_frac = 0.30;
+// Normally 0. A test harness can zero speed_tex and step this instead.
+uniform float phase_offset = 0.0;
+
+// Arc-length window, measured along the belt, the sample must stay inside.
+uniform float s_min = 0.0;
+uniform float s_max = 526.0;
+// mode 0 only: texture y at which the straight belt starts.
+uniform float lin_y0 = 177.0;
+
 // mode 0  straight vertical belt   (input conveyor)
 // mode 1  diagonal + arc + vertical (output conveyors, mirrored for the right)
+uniform int mode : hint_range(0, 1) = 0;
+// Negative disables mirroring; otherwise the texture x to mirror the belt about
+// (the right output arm is the left arm mirrored).
+uniform float mirror_x = -1.0;
 // mode 1: diagonal starts at diag_p0 heading (-sin alpha, cos alpha) for
 // len_diag px, bends through an arc of radius arc_r until vertical, then runs
 // straight down.

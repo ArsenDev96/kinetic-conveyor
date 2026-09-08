@@ -19,6 +19,8 @@
 [ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/station_red_mask.png" id="16_mask_station_red"]
 [ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/station_blue_mask.png" id="17_mask_station_blue"]
 [ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/junction_disc_mask.png" id="18_mask_junction_disc"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/arrow_left_mask.png" id="20_mask_arrow_left"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/arrow_right_mask.png" id="21_mask_arrow_right"]
 
 [sub_resource type="Curve2D" id="Curve2D_input"]
 _data = {
@@ -48,7 +50,7 @@ blend_mode = 1
 ; Each tread overlay shows a region of the SAME machine texture and draws only
 ; the pixels its mask marks (masks are derived from the base PNG). Geometry is
 ; in texture px, re-derived from the current machine PNG: the belt centrelines,
-; the diagonal/arc/vertical bend and the 49.5 / 50.75 px chevron pitch were all
+; the diagonal/arc/vertical bend and the 50.0 / 50.75 px chevron pitch were all
 ; measured on level1_machine_base.png. Speed is set from the machine scale in
 ; level_1_v3.gd (78 world px/s).
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_input"]
@@ -59,8 +61,8 @@ shader_parameter/tex_size = Vector2(1024, 1536)
 shader_parameter/mode = 0
 shader_parameter/mirror_x = -1.0
 shader_parameter/speed_tex = 121.875
-shader_parameter/wrap_tex = 49.5
-shader_parameter/blend_frac = 0.3
+shader_parameter/wrap_tex = 50.0
+shader_parameter/blend_frac = 0.0
 shader_parameter/phase_offset = 0.0
 shader_parameter/s_min = 0.0
 shader_parameter/s_max = 526.0
@@ -181,6 +183,23 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
+; Route lamps: the two arrow lamps painted on the chamber housing, isolated by
+; mask so level_1_v3.gd can light the selected one and dim the other, instead
+; of drawing a separate shape over the artwork.
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_arrow_left"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(341, 769)
+shader_parameter/region_size = Vector2(48, 64)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("20_mask_arrow_left")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_arrow_right"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(634, 769)
+shader_parameter/region_size = Vector2(49, 66)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("21_mask_arrow_right")
+
 [node name="Level1V3" type="Node2D"]
 script = ExtResource("5_controller")
 junction_centre = Vector2(359.68, 659.56)
@@ -287,6 +306,20 @@ texture = ExtResource("2_machine")
 region_enabled = true
 region_rect = Rect2(587, 1171, 398, 336)
 
+[node name="ArrowLeft" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_arrow_left")
+position = Vector2(-147, 33)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(341, 769, 48, 64)
+
+[node name="ArrowRight" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_arrow_right")
+position = Vector2(146.5, 34)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(634, 769, 49, 66)
+
 [node name="RouteIndicators" type="Node2D" parent="."]
 z_index = 10
 
@@ -320,27 +353,47 @@ joint_mode = 2
 begin_cap_mode = 2
 end_cap_mode = 2
 
-[node name="LeftArrowDim" type="Polygon2D" parent="RouteIndicators"]
-position = Vector2(269.3, 654.7)
-color = Color(0.02, 0.015, 0.01, 0.52)
-polygon = PackedVector2Array(-14.94, 0.00, 8.66, -16.92, 8.66, 16.92)
+; Route flow: four chevrons riding the selected output arm at belt speed, so
+; the direction the cargo will take is shown as motion, not just as a lit lane.
+; Positions, headings, colour and end fades are driven by level_1_v3.gd from the
+; active Path2D itself, so they can never disagree with the route.
+[node name="RouteFlow" type="Node2D" parent="RouteIndicators"]
 
-[node name="RightArrowDim" type="Polygon2D" parent="RouteIndicators"]
-position = Vector2(450.7, 654.7)
-color = Color(0.02, 0.015, 0.01, 0.52)
-polygon = PackedVector2Array(14.94, 0.00, -8.66, -16.92, -8.66, 16.92)
-
-[node name="LeftArrowGlow" type="Polygon2D" parent="RouteIndicators"]
+[node name="Chevron0" type="Line2D" parent="RouteIndicators/RouteFlow"]
 material = SubResource("CanvasItemMaterial_add")
-position = Vector2(269.3, 654.7)
-color = Color(1, 0.74, 0.3, 0.75)
-polygon = PackedVector2Array(-14.94, 0.00, 8.66, -16.92, 8.66, 16.92)
+points = PackedVector2Array(-9, -12, 6, 0, -9, 12)
+width = 5.0
+default_color = Color(1, 0.7, 0.45, 0.95)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
 
-[node name="RightArrowGlow" type="Polygon2D" parent="RouteIndicators"]
+[node name="Chevron1" type="Line2D" parent="RouteIndicators/RouteFlow"]
 material = SubResource("CanvasItemMaterial_add")
-position = Vector2(450.7, 654.7)
-color = Color(1, 0.74, 0.3, 0.75)
-polygon = PackedVector2Array(14.94, 0.00, -8.66, -16.92, -8.66, 16.92)
+points = PackedVector2Array(-9, -12, 6, 0, -9, 12)
+width = 5.0
+default_color = Color(1, 0.7, 0.45, 0.95)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="Chevron2" type="Line2D" parent="RouteIndicators/RouteFlow"]
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(-9, -12, 6, 0, -9, 12)
+width = 5.0
+default_color = Color(1, 0.7, 0.45, 0.95)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="Chevron3" type="Line2D" parent="RouteIndicators/RouteFlow"]
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(-9, -12, 6, 0, -9, 12)
+width = 5.0
+default_color = Color(1, 0.7, 0.45, 0.95)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
 
 [node name="JunctionTapRing" type="Line2D" parent="RouteIndicators"]
 material = SubResource("CanvasItemMaterial_add")
@@ -350,11 +403,55 @@ width = 3.0
 default_color = Color(1, 0.72, 0.24, 0.34)
 joint_mode = 2
 
+; First-tap affordance, all retired on the first tap. The ripple is two thin
+; rings expanding from the plate centre (r 22 -> 62, faded out) so the disc
+; itself reads as the thing to press; both stay inside the silver rim (r 72).
+; The leader runs from the hint text up the V between the arms and ends in a
+; chevron pointing at the chamber, so the words are tied to the target.
+[node name="TapRipple" type="Node2D" parent="RouteIndicators"]
+position = Vector2(359.68, 659.56)
+
+[node name="Ripple0" type="Line2D" parent="RouteIndicators/TapRipple"]
+material = SubResource("CanvasItemMaterial_add")
+scale = Vector2(0.44, 0.44)
+points = PackedVector2Array(50.00, 0.00, 49.57, 6.53, 48.30, 12.94, 46.19, 19.13, 43.30, 25.00, 39.67, 30.44, 35.36, 35.36, 30.44, 39.67, 25.00, 43.30, 19.13, 46.19, 12.94, 48.30, 6.53, 49.57, 0.00, 50.00, -6.53, 49.57, -12.94, 48.30, -19.13, 46.19, -25.00, 43.30, -30.44, 39.67, -35.36, 35.36, -39.67, 30.44, -43.30, 25.00, -46.19, 19.13, -48.30, 12.94, -49.57, 6.53, -50.00, 0.00, -49.57, -6.53, -48.30, -12.94, -46.19, -19.13, -43.30, -25.00, -39.67, -30.44, -35.36, -35.36, -30.44, -39.67, -25.00, -43.30, -19.13, -46.19, -12.94, -48.30, -6.53, -49.57, -0.00, -50.00, 6.53, -49.57, 12.94, -48.30, 19.13, -46.19, 25.00, -43.30, 30.44, -39.67, 35.36, -35.36, 39.67, -30.44, 43.30, -25.00, 46.19, -19.13, 48.30, -12.94, 49.57, -6.53, 50.00, -0.00)
+width = 5.0
+default_color = Color(1, 0.72, 0.24, 0.7)
+joint_mode = 2
+
+[node name="Ripple1" type="Line2D" parent="RouteIndicators/TapRipple"]
+material = SubResource("CanvasItemMaterial_add")
+scale = Vector2(0.44, 0.44)
+points = PackedVector2Array(50.00, 0.00, 49.57, 6.53, 48.30, 12.94, 46.19, 19.13, 43.30, 25.00, 39.67, 30.44, 35.36, 35.36, 30.44, 39.67, 25.00, 43.30, 19.13, 46.19, 12.94, 48.30, 6.53, 49.57, 0.00, 50.00, -6.53, 49.57, -12.94, 48.30, -19.13, 46.19, -25.00, 43.30, -30.44, 39.67, -35.36, 35.36, -39.67, 30.44, -43.30, 25.00, -46.19, 19.13, -48.30, 12.94, -49.57, 6.53, -50.00, 0.00, -49.57, -6.53, -48.30, -12.94, -46.19, -19.13, -43.30, -25.00, -39.67, -30.44, -35.36, -35.36, -30.44, -39.67, -25.00, -43.30, -19.13, -46.19, -12.94, -48.30, -6.53, -49.57, -0.00, -50.00, 6.53, -49.57, 12.94, -48.30, 19.13, -46.19, 25.00, -43.30, 30.44, -39.67, 35.36, -35.36, 39.67, -30.44, 43.30, -25.00, 46.19, -19.13, 48.30, -12.94, 49.57, -6.53, 50.00, -0.00)
+width = 5.0
+default_color = Color(1, 0.72, 0.24, 0.7)
+joint_mode = 2
+
+[node name="TapHintLeader" type="Node2D" parent="RouteIndicators"]
+
+[node name="Line" type="Line2D" parent="RouteIndicators/TapHintLeader"]
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(360, 838, 360, 792)
+width = 3.0
+default_color = Color(1, 0.72, 0.24, 0.6)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="Chevron" type="Line2D" parent="RouteIndicators/TapHintLeader"]
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(349, 790, 360, 778, 371, 790)
+width = 3.0
+default_color = Color(1, 0.72, 0.24, 0.8)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
 [node name="TapHint" type="Label" parent="RouteIndicators"]
 ; One line, parked low enough that the V between the two conveyor arms has
 ; opened up: at this height the arms' inner edges sit near x 235 and x 485, so
 ; the centred text clears both rails by well over 50 px and still sits above the
-; bin rims (y 892). Farther from the chamber than the apex, but unobstructed.
+; bin rims (y 892). Farther from the chamber than the apex, but unobstructed;
+; TapHintLeader above bridges that gap back to the Junction.
 offset_left = 250
 offset_top = 846
 offset_right = 470
@@ -362,7 +459,7 @@ offset_bottom = 878
 theme_override_colors/font_color = Color(1, 0.86, 0.52, 1)
 theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.02, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "TAP TO SWITCH"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -430,8 +527,8 @@ default_color = Color(0.3, 0.55, 1, 1)
 
 [node name="CorrectPanel" type="Sprite2D" parent="HUD/Counters"]
 texture_filter = 1
-position = Vector2(110, 55)
-scale = Vector2(0.095, 0.09)
+position = Vector2(122, 55)
+scale = Vector2(0.085, 0.085)
 texture = ExtResource("6_hud_panel")
 
 [node name="ProgressPanel" type="Sprite2D" parent="HUD/Counters"]
@@ -442,15 +539,15 @@ texture = ExtResource("6_hud_panel")
 
 [node name="MistakePanel" type="Sprite2D" parent="HUD/Counters"]
 texture_filter = 1
-position = Vector2(610, 55)
-scale = Vector2(0.095, 0.09)
+position = Vector2(598, 55)
+scale = Vector2(0.085, 0.085)
 texture = ExtResource("6_hud_panel")
 
 [node name="CorrectLabel" type="Label" parent="HUD/Counters"]
-offset_left = 15.0
-offset_top = 38.0
-offset_right = 205.0
-offset_bottom = 72.0
+offset_left = 30.0
+offset_top = 36.0
+offset_right = 214.0
+offset_bottom = 70.0
 theme_override_colors/font_color = Color(0.75, 1, 0.78, 1)
 theme_override_font_sizes/font_size = 20
 text = "Correct: 0"
@@ -459,9 +556,9 @@ vertical_alignment = 1
 
 [node name="BlocksLabel" type="Label" parent="HUD/Counters"]
 offset_left = 238.0
-offset_top = 34.0
+offset_top = 33.0
 offset_right = 482.0
-offset_bottom = 76.0
+offset_bottom = 75.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 23
 text = "Blocks: 0 / 10"
@@ -469,10 +566,10 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="MistakesLabel" type="Label" parent="HUD/Counters"]
-offset_left = 515.0
-offset_top = 38.0
-offset_right = 705.0
-offset_bottom = 72.0
+offset_left = 506.0
+offset_top = 36.0
+offset_right = 690.0
+offset_bottom = 70.0
 theme_override_colors/font_color = Color(1, 0.78, 0.76, 1)
 theme_override_font_sizes/font_size = 20
 text = "Mistakes: 0"
@@ -498,23 +595,23 @@ color = Color(0.015, 0.025, 0.04, 0.72)
 
 [node name="ResultPanel" type="Control" parent="HUD/ResultOverlay"]
 anchors_preset = 0
-offset_left = 135.0
-offset_top = 405.0
-offset_right = 585.0
-offset_bottom = 785.0
+offset_left = 80.0
+offset_top = 380.0
+offset_right = 640.0
+offset_bottom = 853.0
 
 [node name="PanelVisual" type="Sprite2D" parent="HUD/ResultOverlay/ResultPanel"]
 texture_filter = 1
-position = Vector2(225, 190)
-scale = Vector2(0.32967, 0.32986)
+position = Vector2(280, 236.5)
+scale = Vector2(0.41026, 0.41059)
 texture = ExtResource("7_result_panel")
 
 [node name="ResultTitle" type="Label" parent="HUD/ResultOverlay/ResultPanel"]
 layout_mode = 0
-offset_left = 30.0
-offset_top = 45.0
-offset_right = 420.0
-offset_bottom = 100.0
+offset_left = 45.0
+offset_top = 84.0
+offset_right = 515.0
+offset_bottom = 139.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 32
 text = "LEVEL COMPLETE"
@@ -523,10 +620,10 @@ vertical_alignment = 1
 
 [node name="ResultSummary" type="Label" parent="HUD/ResultOverlay/ResultPanel"]
 layout_mode = 0
-offset_left = 30.0
-offset_top = 125.0
-offset_right = 420.0
-offset_bottom = 225.0
+offset_left = 45.0
+offset_top = 154.0
+offset_right = 515.0
+offset_bottom = 254.0
 theme_override_colors/font_color = Color(0.9, 0.92, 0.95, 1)
 theme_override_font_sizes/font_size = 24
 text = "Correct: 0 / 10
@@ -536,16 +633,16 @@ vertical_alignment = 1
 
 [node name="RetryButtonVisual" type="Sprite2D" parent="HUD/ResultOverlay/ResultPanel"]
 texture_filter = 1
-position = Vector2(225, 300)
+position = Vector2(280, 309)
 scale = Vector2(0.10129, 0.08287)
 texture = ExtResource("8_retry_button")
 
 [node name="RetryButton" type="Button" parent="HUD/ResultOverlay/ResultPanel"]
 layout_mode = 0
-offset_left = 115.0
-offset_top = 270.0
-offset_right = 335.0
-offset_bottom = 330.0
+offset_left = 170.0
+offset_top = 276.0
+offset_right = 390.0
+offset_bottom = 336.0
 theme_override_font_sizes/font_size = 24
 text = "RETRY"
 flat = true
