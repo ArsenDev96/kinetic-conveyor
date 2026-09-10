@@ -246,7 +246,11 @@ func _on_block_delivered(block) -> void:
 	# Left station is RED, right station is BLUE.
 	var expected_route: int = ROUTE_LEFT if block.colour == COLOUR_RED else ROUTE_RIGHT
 	var correct: bool = block.captured_direction == expected_route
-	if round_state == STATE_PLAYING:
+	# Read before _check_round_end() below can move the round to a terminal
+	# state. The delivery that ends the round still earns its own feedback; a
+	# block already in flight at that moment must not add another delivery cue.
+	var round_was_live: bool = round_state == STATE_PLAYING
+	if round_was_live:
 		if correct:
 			correct_count += 1
 		else:
@@ -256,7 +260,7 @@ func _on_block_delivered(block) -> void:
 	# Presentation only: the scoring above is already final.
 	var station: Sprite2D = _station_red if block.captured_direction == ROUTE_LEFT else _station_blue
 	block.play_delivery_finish(correct)
-	_play_station_reaction(station, correct)
+	_play_station_reaction(station, correct, round_was_live)
 	_check_round_end()
 
 
@@ -604,7 +608,7 @@ func _set_station_select(node: Sprite2D, tint: Color, on: bool, pulse: bool) -> 
 
 ## Runs after the same DELIVERY_HOLD the cube uses, so the station reacts the
 ## moment the cube starts its squash (correct) or rejection bounce (wrong).
-func _play_station_reaction(station: Sprite2D, correct: bool) -> void:
+func _play_station_reaction(station: Sprite2D, correct: bool, feedback: bool = true) -> void:
 	var key := "station_%s" % station.name
 	_restore(station)
 	var base_mod: Color = _base[station]["modulate"]
@@ -613,8 +617,11 @@ func _play_station_reaction(station: Sprite2D, correct: bool) -> void:
 	var tw := _fx_tween(key)
 	tw.tween_interval(DELIVERY_HOLD)
 	# Sound, haptic and particles ride the station's own tween, so they land
-	# on the same frame as the tint or the shake rather than at arrival.
-	tw.tween_callback(_play_delivery_feedback.bind(station, correct))
+	# on the same frame as the tint or the shake rather than at arrival. They
+	# are skipped outright for a block that lands after the round already ended,
+	# so a late arrival cannot read as a fourth mistake.
+	if feedback:
+		tw.tween_callback(_play_delivery_feedback.bind(station, correct))
 	if correct:
 		var tint: Color = STATION_TINT_RED if station == _station_red else STATION_TINT_BLUE
 		tw.tween_property(station, "modulate", tint, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
