@@ -33,6 +33,14 @@ const SFX := {
 ## themselves, so this stays a single number to pull the level down if needed.
 const VOLUME_DB := 0.0
 
+## Per-event departure from that trim, in dB. An id absent here plays at
+## VOLUME_DB, so adding an entry cannot change the level of any other event.
+## The junction click is the most repeated sound in the level - it can fire on
+## every tap - so it sits below the bank while the rarer one-off cues do not.
+const VOLUME_DB_BY_EVENT := {
+	&"junction_switch": -4.0,
+}
+
 ## Voices. Enough for the rare overlap (a delivery landing on a spawn) and
 ## allocated once at startup, so a burst of events never allocates.
 const POOL_SIZE := 6
@@ -94,6 +102,8 @@ func _play(id: StringName) -> void:
 		return
 	var player := _take_player()
 	player.stream = stream
+	# Re-applied per play: a pooled voice may last have carried another event.
+	player.volume_db = VOLUME_DB_BY_EVENT.get(id, VOLUME_DB)
 	player.play()
 
 
