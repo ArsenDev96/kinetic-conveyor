@@ -1,0 +1,677 @@
+[gd_scene load_steps=38 format=3]
+
+[ext_resource type="Texture2D" uid="uid://dj51s62t3ounq" path="res://assets/themes/factory/board/board_background.png" id="1_board"]
+[ext_resource type="Texture2D" uid="uid://c2vls3ftcg34g" path="res://assets/themes/factory_v3/level1/machine/level1_machine_base.png" id="2_machine"]
+[ext_resource type="Texture2D" uid="uid://bnietthq2nfdx" path="res://assets/themes/factory_v3/level1/blocks/block_red.png" id="3_block_red"]
+[ext_resource type="Texture2D" uid="uid://wsqjmkkfm3q4" path="res://assets/themes/factory_v3/level1/blocks/block_blue.png" id="4_block_blue"]
+[ext_resource type="Script" path="res://level_1_v3.gd" id="5_controller"]
+[ext_resource type="Texture2D" uid="uid://dxr6e4cfkfu3y" path="res://assets/ui/hud/hud_counter_panel.png" id="6_hud_panel"]
+[ext_resource type="Texture2D" uid="uid://c2ilc8ogu1gwl" path="res://assets/ui/results/result_panel.png" id="7_result_panel"]
+[ext_resource type="Texture2D" uid="uid://5bqvkj51nun2" path="res://assets/ui/buttons/retry_button.png" id="8_retry_button"]
+[ext_resource type="Shader" path="res://level1_v3_tread.gdshader" id="9_tread_shader"]
+[ext_resource type="Shader" path="res://level1_v3_overlay.gdshader" id="10_overlay_shader"]
+[ext_resource type="Shader" path="res://level1_v3_plate.gdshader" id="19_plate_shader"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/tread_input_mask.png" id="11_mask_tread_input"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/tread_left_mask.png" id="12_mask_tread_left"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/tread_right_mask.png" id="13_mask_tread_right"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/source_body_mask.png" id="14_mask_source_body"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/source_beacon_mask.png" id="15_mask_source_beacon"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/station_red_mask.png" id="16_mask_station_red"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/station_blue_mask.png" id="17_mask_station_blue"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/junction_disc_mask.png" id="18_mask_junction_disc"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/arrow_left_mask.png" id="20_mask_arrow_left"]
+[ext_resource type="Texture2D" path="res://assets/themes/factory_v3/level1/machine/masks/arrow_right_mask.png" id="21_mask_arrow_right"]
+
+[sub_resource type="Curve2D" id="Curve2D_input"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 359.68, 296.04, 0, 0, 0, 0, 359.68, 659.56)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_left_output"]
+_data = {
+"points": PackedVector2Array(0, 0, -100.376, 69.704, 359.68, 659.56, 129.908, -152.023, -12.298, 14.392, 227.707, 790, 12.298, -14.392, 0, 36.03, 190.789, 833.203, 0, -36.03, 0, 0, 185.6, 941.16)
+}
+point_count = 4
+
+[sub_resource type="Curve2D" id="Curve2D_right_output"]
+_data = {
+"points": PackedVector2Array(0, 0, 100.376, 69.704, 359.68, 659.56, -129.908, -152.023, 12.298, 14.392, 491.653, 790, -12.298, -14.392, 0, 36.03, 528.571, 833.203, 0, -36.03, 0, 0, 533.76, 941.16)
+}
+point_count = 4
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_junction"]
+radius = 71.17
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_add"]
+blend_mode = 1
+
+; ---------------------------------------------------------------- tread motion
+; Each tread overlay shows a region of the SAME machine texture and draws only
+; the pixels its mask marks (masks are derived from the base PNG). Geometry is
+; in texture px, re-derived from the current machine PNG: the belt centrelines,
+; the diagonal/arc/vertical bend and the 50.0 / 50.75 px chevron pitch were all
+; measured on level1_machine_base.png. Speed is set from the machine scale in
+; level_1_v3.gd (78 world px/s).
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_input"]
+shader = ExtResource("9_tread_shader")
+shader_parameter/region_origin = Vector2(472, 177)
+shader_parameter/region_size = Vector2(78, 526)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/mode = 0
+shader_parameter/mirror_x = -1.0
+shader_parameter/speed_tex = 121.875
+shader_parameter/wrap_tex = 50.0
+shader_parameter/blend_frac = 0.0
+shader_parameter/phase_offset = 0.0
+shader_parameter/s_min = 0.0
+shader_parameter/s_max = 526.0
+shader_parameter/lin_y0 = 177.0
+shader_parameter/tread_mask = ExtResource("11_mask_tread_input")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_left"]
+shader = ExtResource("9_tread_shader")
+shader_parameter/region_origin = Vector2(209, 886)
+shader_parameter/region_size = Vector2(212, 275)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/mode = 1
+shader_parameter/mirror_x = -1
+shader_parameter/speed_tex = 121.875
+shader_parameter/wrap_tex = 50.75
+shader_parameter/blend_frac = 0.3
+shader_parameter/phase_offset = 0.0
+shader_parameter/s_min = 0.0
+shader_parameter/s_max = 305.04
+shader_parameter/diag_p0 = Vector2(393.5, 908)
+shader_parameter/alpha = 0.707101
+shader_parameter/arc_r = 32
+shader_parameter/len_diag = 213.548
+shader_parameter/tread_mask = ExtResource("12_mask_tread_left")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tread_right"]
+shader = ExtResource("9_tread_shader")
+shader_parameter/region_origin = Vector2(602, 886)
+shader_parameter/region_size = Vector2(212, 275)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/mode = 1
+shader_parameter/mirror_x = 511
+shader_parameter/speed_tex = 121.875
+shader_parameter/wrap_tex = 50.75
+shader_parameter/blend_frac = 0.3
+shader_parameter/phase_offset = 0.0
+shader_parameter/s_min = 0.0
+shader_parameter/s_max = 305.04
+shader_parameter/diag_p0 = Vector2(393.5, 908)
+shader_parameter/alpha = 0.707101
+shader_parameter/arc_r = 32
+shader_parameter/len_diag = 213.548
+shader_parameter/tread_mask = ExtResource("13_mask_tread_right")
+
+; ---------------------------------------------------------------- part overlays
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_source_body"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(349, 8)
+shader_parameter/region_size = Vector2(325, 329)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("14_mask_source_body")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_source_beacon"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(473, 5)
+shader_parameter/region_size = Vector2(76, 58)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("15_mask_source_beacon")
+
+; The Junction plate: its own round-belt shader. plate_angle tilts the slats to
+; face the selected exit and sends the surface that way; level_1_v3.gd swings it
+; between the two arm directions on every route change. Sampling cross-fades
+; between two points one slat pitch apart instead of hard-wrapping at the rim,
+; so the whole disc animates as one piece with no seam and no static ring.
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_junction_disc"]
+shader = ExtResource("19_plate_shader")
+shader_parameter/region_origin = Vector2(416, 713)
+shader_parameter/region_size = Vector2(190, 190)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/speed_tex = 156.25
+shader_parameter/wrap_tex = 29.25
+shader_parameter/blend_frac = 0.3
+shader_parameter/phase_offset = 0.0
+shader_parameter/plate_centre = Vector2(511, 808)
+shader_parameter/plate_radius = 91.0
+shader_parameter/plate_angle = 0.70699
+shader_parameter/plate_blend = 12.0
+shader_parameter/tread_mask = ExtResource("18_mask_junction_disc")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_station_red"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(39, 1171)
+shader_parameter/region_size = Vector2(397, 336)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("16_mask_station_red")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_station_blue"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(587, 1171)
+shader_parameter/region_size = Vector2(398, 336)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("17_mask_station_blue")
+
+; Across-width falloff for the route band. Line2D maps V across the line width,
+; so this vertical gradient gives both band layers a plateau in the middle and a
+; feathered shoulder instead of the hard-edged rectangle a flat Line2D draws.
+[sub_resource type="Gradient" id="Gradient_route_band"]
+offsets = PackedFloat32Array(0, 0.06, 0.15, 0.275, 0.725, 0.85, 0.94, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0.2, 1, 1, 1, 0.55, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.55, 1, 1, 1, 0.2, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_route_band"]
+gradient = SubResource("Gradient_route_band")
+width = 4
+height = 128
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+; Procedural soft glow for the optional spawn flash at the source mouth.
+[sub_resource type="Gradient" id="Gradient_mouth_flash"]
+offsets = PackedFloat32Array(0, 0.3, 1)
+colors = PackedColorArray(1, 0.98, 0.85, 1, 1, 0.85, 0.45, 0.5, 1, 0.75, 0.3, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_mouth_flash"]
+gradient = SubResource("Gradient_mouth_flash")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+; Route lamps: the two arrow lamps painted on the chamber housing, isolated by
+; mask so level_1_v3.gd can light the selected one and dim the other, instead
+; of drawing a separate shape over the artwork.
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_arrow_left"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(341, 769)
+shader_parameter/region_size = Vector2(48, 64)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("20_mask_arrow_left")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_arrow_right"]
+shader = ExtResource("10_overlay_shader")
+shader_parameter/region_origin = Vector2(634, 769)
+shader_parameter/region_size = Vector2(49, 66)
+shader_parameter/tex_size = Vector2(1024, 1536)
+shader_parameter/part_mask = ExtResource("21_mask_arrow_right")
+
+; Delivery burst. A soft round dot so the particles read as sparks rather than
+; squares, and a fade ramp so they are gone well before the block has finished
+; shrinking. Both are shared by the two bursts.
+[sub_resource type="Gradient" id="Gradient_spark_dot"]
+offsets = PackedFloat32Array(0, 0.62, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.95, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_spark_dot"]
+gradient = SubResource("Gradient_spark_dot")
+width = 16
+height = 16
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_burst_fade"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 0)
+
+[node name="Level1V3" type="Node2D"]
+script = ExtResource("5_controller")
+junction_centre = Vector2(359.68, 659.56)
+block_sprite_scale = 0.047298
+block_sprite_offset = Vector2(0.5, 9.5)
+block_red_texture = ExtResource("3_block_red")
+block_blue_texture = ExtResource("4_block_blue")
+
+[node name="BoardVisual" type="Sprite2D" parent="."]
+z_index = -10
+position = Vector2(360, 640)
+scale = Vector2(0.76514, 0.76514)
+texture = ExtResource("1_board")
+
+[node name="MachineVisual" type="Sprite2D" parent="."]
+position = Vector2(360.32, 633.96)
+scale = Vector2(0.64, 0.64)
+texture = ExtResource("2_machine")
+
+; Overlays are children of MachineVisual in its own texture-pixel space, so
+; they inherit its transform and stay pixel-aligned by construction:
+; position = region centre - texture centre (512, 768).
+
+[node name="TreadInput" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_tread_input")
+position = Vector2(-1, -328)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(472, 177, 78, 526)
+
+[node name="TreadLeft" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_tread_left")
+position = Vector2(-197, 255.5)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(209, 886, 212, 275)
+
+[node name="TreadRight" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_tread_right")
+position = Vector2(196, 255.5)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(602, 886, 212, 275)
+
+[node name="SourceBody" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_source_body")
+position = Vector2(-0.5, -595.5)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(349, 8, 325, 329)
+
+[node name="SourceBeacon" type="Sprite2D" parent="MachineVisual/SourceBody"]
+material = SubResource("ShaderMaterial_source_beacon")
+position = Vector2(-0.5, -138.5)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(473, 5, 76, 58)
+
+[node name="MouthFlash" type="Sprite2D" parent="MachineVisual"]
+modulate = Color(1, 1, 1, 0)
+material = SubResource("CanvasItemMaterial_add")
+position = Vector2(-0.5, -600)
+scale = Vector2(1.1, 0.5)
+texture = SubResource("GradientTexture2D_mouth_flash")
+
+[node name="JunctionDisc" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_junction_disc")
+position = Vector2(-1, 40)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(416, 713, 190, 190)
+
+[node name="StationRed" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_station_red")
+position = Vector2(-274.5, 571)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(39, 1171, 397, 336)
+
+[node name="StationBlue" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_station_blue")
+position = Vector2(274, 571)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(587, 1171, 398, 336)
+
+; Selected-destination accent. Same mask/material as the station overlay above,
+; drawn on top with a colour-shifted modulate whose alpha the controller fades
+; in/out. Separate nodes so the correct/wrong delivery reaction (which animates
+; StationRed / StationBlue) and this selection state never share a property.
+[node name="StationRedSelect" type="Sprite2D" parent="MachineVisual"]
+modulate = Color(1.6, 0.62, 0.55, 0)
+material = SubResource("ShaderMaterial_station_red")
+position = Vector2(-274.5, 571)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(39, 1171, 397, 336)
+
+[node name="StationBlueSelect" type="Sprite2D" parent="MachineVisual"]
+modulate = Color(0.55, 0.8, 1.7, 0)
+material = SubResource("ShaderMaterial_station_blue")
+position = Vector2(274, 571)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(587, 1171, 398, 336)
+
+[node name="ArrowLeft" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_arrow_left")
+position = Vector2(-147, 33)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(341, 769, 48, 64)
+
+[node name="ArrowRight" type="Sprite2D" parent="MachineVisual"]
+material = SubResource("ShaderMaterial_arrow_right")
+position = Vector2(146.5, 34)
+texture = ExtResource("2_machine")
+region_enabled = true
+region_rect = Rect2(634, 769, 49, 66)
+
+[node name="RouteIndicators" type="Node2D" parent="."]
+z_index = 10
+
+; Route indication is a soft illuminated lane lying ON the belt: a wide, very
+; faint halo under a narrower band, both feathered across their width by
+; Gradient_route_band so neither shows a hard edge. Peak additive alpha is ~0.23,
+; low enough that the tread and its chevrons read straight through it. Trimmed by
+; level_1_v3.gd so the band -- including its round end caps -- starts outside the
+; Junction platform (r >= 92) and stops above the bin rim (y <= 884).
+[node name="RouteBeamGlow" type="Line2D" parent="RouteIndicators"]
+texture_repeat = 1
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(0, 0)
+width = 27.0
+default_color = Color(1, 0.38, 0.29, 0.1)
+texture = SubResource("GradientTexture2D_route_band")
+texture_mode = 2
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="RouteBeam" type="Line2D" parent="RouteIndicators"]
+texture_repeat = 1
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(0, 0)
+width = 18.0
+default_color = Color(1, 0.42, 0.34, 0.13)
+texture = SubResource("GradientTexture2D_route_band")
+texture_mode = 2
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="JunctionTapRing" type="Line2D" parent="RouteIndicators"]
+material = SubResource("CanvasItemMaterial_add")
+position = Vector2(359.68, 659.56)
+points = PackedVector2Array(50.00, 0.00, 49.57, 6.53, 48.30, 12.94, 46.19, 19.13, 43.30, 25.00, 39.67, 30.44, 35.36, 35.36, 30.44, 39.67, 25.00, 43.30, 19.13, 46.19, 12.94, 48.30, 6.53, 49.57, 0.00, 50.00, -6.53, 49.57, -12.94, 48.30, -19.13, 46.19, -25.00, 43.30, -30.44, 39.67, -35.36, 35.36, -39.67, 30.44, -43.30, 25.00, -46.19, 19.13, -48.30, 12.94, -49.57, 6.53, -50.00, 0.00, -49.57, -6.53, -48.30, -12.94, -46.19, -19.13, -43.30, -25.00, -39.67, -30.44, -35.36, -35.36, -30.44, -39.67, -25.00, -43.30, -19.13, -46.19, -12.94, -48.30, -6.53, -49.57, -0.00, -50.00, 6.53, -49.57, 12.94, -48.30, 19.13, -46.19, 25.00, -43.30, 30.44, -39.67, 35.36, -35.36, 39.67, -30.44, 43.30, -25.00, 46.19, -19.13, 48.30, -12.94, 49.57, -6.53, 50.00, -0.00)
+width = 3.0
+default_color = Color(1, 0.72, 0.24, 0.34)
+joint_mode = 2
+
+; First-tap affordance, all retired on the first tap. The ripple is two thin
+; rings expanding from the plate centre (r 22 -> 62, faded out) so the disc
+; itself reads as the thing to press; both stay inside the silver rim (r 72).
+; The leader runs from the hint text up the V between the arms and ends in a
+; chevron pointing at the chamber, so the words are tied to the target.
+[node name="TapRipple" type="Node2D" parent="RouteIndicators"]
+position = Vector2(359.68, 659.56)
+
+[node name="Ripple0" type="Line2D" parent="RouteIndicators/TapRipple"]
+material = SubResource("CanvasItemMaterial_add")
+scale = Vector2(0.44, 0.44)
+points = PackedVector2Array(50.00, 0.00, 49.57, 6.53, 48.30, 12.94, 46.19, 19.13, 43.30, 25.00, 39.67, 30.44, 35.36, 35.36, 30.44, 39.67, 25.00, 43.30, 19.13, 46.19, 12.94, 48.30, 6.53, 49.57, 0.00, 50.00, -6.53, 49.57, -12.94, 48.30, -19.13, 46.19, -25.00, 43.30, -30.44, 39.67, -35.36, 35.36, -39.67, 30.44, -43.30, 25.00, -46.19, 19.13, -48.30, 12.94, -49.57, 6.53, -50.00, 0.00, -49.57, -6.53, -48.30, -12.94, -46.19, -19.13, -43.30, -25.00, -39.67, -30.44, -35.36, -35.36, -30.44, -39.67, -25.00, -43.30, -19.13, -46.19, -12.94, -48.30, -6.53, -49.57, -0.00, -50.00, 6.53, -49.57, 12.94, -48.30, 19.13, -46.19, 25.00, -43.30, 30.44, -39.67, 35.36, -35.36, 39.67, -30.44, 43.30, -25.00, 46.19, -19.13, 48.30, -12.94, 49.57, -6.53, 50.00, -0.00)
+width = 5.0
+default_color = Color(1, 0.72, 0.24, 0.7)
+joint_mode = 2
+
+[node name="Ripple1" type="Line2D" parent="RouteIndicators/TapRipple"]
+material = SubResource("CanvasItemMaterial_add")
+scale = Vector2(0.44, 0.44)
+points = PackedVector2Array(50.00, 0.00, 49.57, 6.53, 48.30, 12.94, 46.19, 19.13, 43.30, 25.00, 39.67, 30.44, 35.36, 35.36, 30.44, 39.67, 25.00, 43.30, 19.13, 46.19, 12.94, 48.30, 6.53, 49.57, 0.00, 50.00, -6.53, 49.57, -12.94, 48.30, -19.13, 46.19, -25.00, 43.30, -30.44, 39.67, -35.36, 35.36, -39.67, 30.44, -43.30, 25.00, -46.19, 19.13, -48.30, 12.94, -49.57, 6.53, -50.00, 0.00, -49.57, -6.53, -48.30, -12.94, -46.19, -19.13, -43.30, -25.00, -39.67, -30.44, -35.36, -35.36, -30.44, -39.67, -25.00, -43.30, -19.13, -46.19, -12.94, -48.30, -6.53, -49.57, -0.00, -50.00, 6.53, -49.57, 12.94, -48.30, 19.13, -46.19, 25.00, -43.30, 30.44, -39.67, 35.36, -35.36, 39.67, -30.44, 43.30, -25.00, 46.19, -19.13, 48.30, -12.94, 49.57, -6.53, 50.00, -0.00)
+width = 5.0
+default_color = Color(1, 0.72, 0.24, 0.7)
+joint_mode = 2
+
+[node name="TapHintLeader" type="Node2D" parent="RouteIndicators"]
+
+[node name="Line" type="Line2D" parent="RouteIndicators/TapHintLeader"]
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(360, 838, 360, 792)
+width = 3.0
+default_color = Color(1, 0.72, 0.24, 0.6)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="Chevron" type="Line2D" parent="RouteIndicators/TapHintLeader"]
+material = SubResource("CanvasItemMaterial_add")
+points = PackedVector2Array(349, 790, 360, 778, 371, 790)
+width = 3.0
+default_color = Color(1, 0.72, 0.24, 0.8)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="TapHint" type="Label" parent="RouteIndicators"]
+; One line, parked low enough that the V between the two conveyor arms has
+; opened up: at this height the arms' inner edges sit near x 235 and x 485, so
+; the centred text clears both rails by well over 50 px and still sits above the
+; bin rims (y 892). Farther from the chamber than the apex, but unobstructed;
+; TapHintLeader above bridges that gap back to the Junction.
+offset_left = 250
+offset_top = 846
+offset_right = 470
+offset_bottom = 878
+theme_override_colors/font_color = Color(1, 0.86, 0.52, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.02, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "TAP TO SWITCH"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MovementPaths" type="Node2D" parent="."]
+z_index = 100
+
+[node name="InputPath" type="Path2D" parent="MovementPaths"]
+curve = SubResource("Curve2D_input")
+
+[node name="LeftOutputPath" type="Path2D" parent="MovementPaths"]
+curve = SubResource("Curve2D_left_output")
+
+[node name="RightOutputPath" type="Path2D" parent="MovementPaths"]
+curve = SubResource("Curve2D_right_output")
+
+[node name="JunctionInput" type="Area2D" parent="."]
+position = Vector2(359.68, 659.56)
+
+[node name="JunctionShape" type="CollisionShape2D" parent="JunctionInput"]
+shape = SubResource("CircleShape2D_junction")
+
+[node name="DebugOverlay" type="Node2D" parent="."]
+visible = false
+z_index = 50
+
+[node name="InputPathLine" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(359.68, 296.04, 359.68, 305.03, 359.68, 311.66, 359.68, 319.89, 359.68, 327.03, 359.68, 332.22, 359.68, 337.74, 359.68, 343.56, 359.68, 349.68, 359.68, 356.07, 359.68, 362.72, 359.68, 369.60, 359.68, 376.72, 359.68, 384.04, 359.68, 391.55, 359.68, 399.24, 359.68, 407.08, 359.68, 415.07, 359.68, 423.18, 359.68, 431.40, 359.68, 439.71, 359.68, 448.10, 359.68, 456.54, 359.68, 465.03, 359.68, 473.54, 359.68, 482.06, 359.68, 490.57, 359.68, 499.06, 359.68, 507.50, 359.68, 515.89, 359.68, 524.20, 359.68, 532.42, 359.68, 540.53, 359.68, 548.52, 359.68, 556.36, 359.68, 564.05, 359.68, 571.56, 359.68, 578.88, 359.68, 586.00, 359.68, 592.88, 359.68, 599.53, 359.68, 605.92, 359.68, 612.04, 359.68, 617.86, 359.68, 623.38, 359.68, 628.57, 359.68, 635.71, 359.68, 643.94, 359.68, 650.57, 359.68, 659.56)
+width = 3.0
+default_color = Color(1, 1, 1, 0.85)
+
+[node name="LeftOutputPathLine" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(359.68, 659.56, 355.12, 662.71, 350.84, 665.64, 343.08, 670.84, 336.34, 675.25, 330.52, 678.94, 325.55, 681.98, 317.86, 686.42, 310.76, 690.08, 304.77, 693.91, 300.09, 700.30, 295.66, 706.42, 292.66, 710.47, 289.02, 715.29, 284.67, 720.93, 279.52, 727.48, 273.51, 735.02, 270.16, 739.18, 266.56, 743.61, 262.70, 748.32, 258.58, 753.33, 254.18, 758.63, 249.49, 764.25, 244.51, 770.18, 239.23, 776.45, 233.63, 783.05, 227.71, 790.00, 223.09, 795.40, 218.48, 800.80, 213.86, 806.20, 209.25, 811.60, 204.63, 817.00, 200.02, 822.40, 195.40, 827.80, 190.79, 833.20, 190.73, 839.96, 190.57, 846.71, 190.31, 853.46, 189.98, 860.20, 189.59, 866.95, 189.15, 873.69, 188.68, 880.44, 188.19, 887.18, 187.71, 893.92, 187.24, 900.67, 186.80, 907.41, 186.41, 914.16, 186.08, 920.91, 185.82, 927.65, 185.66, 934.41, 185.60, 941.16)
+width = 3.0
+default_color = Color(1, 0.35, 0.35, 0.85)
+
+[node name="RightOutputPathLine" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(359.68, 659.56, 364.24, 662.71, 368.52, 665.64, 376.28, 670.84, 383.02, 675.25, 388.84, 678.94, 393.81, 681.98, 401.50, 686.42, 408.60, 690.08, 414.59, 693.91, 419.27, 700.30, 423.70, 706.42, 426.70, 710.47, 430.34, 715.29, 434.69, 720.93, 439.84, 727.48, 445.85, 735.02, 449.20, 739.18, 452.80, 743.61, 456.66, 748.32, 460.78, 753.33, 465.18, 758.63, 469.87, 764.25, 474.85, 770.18, 480.13, 776.45, 485.73, 783.05, 491.65, 790.00, 496.27, 795.40, 500.88, 800.80, 505.50, 806.20, 510.11, 811.60, 514.73, 817.00, 519.34, 822.40, 523.96, 827.80, 528.57, 833.20, 528.63, 839.96, 528.79, 846.71, 529.05, 853.46, 529.38, 860.20, 529.77, 866.95, 530.21, 873.69, 530.68, 880.44, 531.17, 887.18, 531.65, 893.92, 532.12, 900.67, 532.56, 907.41, 532.95, 914.16, 533.28, 920.91, 533.54, 927.65, 533.70, 934.41, 533.76, 941.16)
+width = 3.0
+default_color = Color(0.35, 0.6, 1, 0.85)
+
+[node name="SourceAnchor" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(359.68, 285.04, 370.68, 296.04, 359.68, 307.04, 348.68, 296.04, 359.68, 285.04)
+width = 2.5
+default_color = Color(1, 1, 1, 1)
+
+[node name="JunctionAnchor" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(359.68, 641.56, 377.68, 659.56, 359.68, 677.56, 341.68, 659.56, 359.68, 641.56)
+width = 2.5
+default_color = Color(1, 0.85, 0.1, 1)
+
+[node name="RedDestinationAnchor" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(185.6, 927.16, 199.6, 941.16, 185.6, 955.16, 171.6, 941.16, 185.6, 927.16)
+width = 2.5
+default_color = Color(1, 0.25, 0.25, 1)
+
+[node name="BlueDestinationAnchor" type="Line2D" parent="DebugOverlay"]
+points = PackedVector2Array(533.76, 927.16, 547.76, 941.16, 533.76, 955.16, 519.76, 941.16, 533.76, 927.16)
+width = 2.5
+default_color = Color(0.3, 0.55, 1, 1)
+
+; Delivery particles: one tiny one-shot burst per destination, parked inactive
+; and restarted only when a correct block lands. CPUParticles2D rather than GPU
+; because six particles cost nothing on the CPU and this ships on GL
+; Compatibility. Positions come from the output curves in level_1_v3.gd, so the
+; burst is exactly where the block vanishes and no geometry is duplicated here.
+; z_index sits above the machine and the block; the HUD CanvasLayer still draws
+; over the top.
+[node name="DeliveryFx" type="Node2D" parent="."]
+z_index = 105
+
+[node name="CorrectBurstRed" type="CPUParticles2D" parent="DeliveryFx"]
+emitting = false
+amount = 6
+lifetime = 0.38
+one_shot = true
+explosiveness = 1.0
+texture = SubResource("GradientTexture2D_spark_dot")
+emission_shape = 1
+emission_sphere_radius = 5.0
+direction = Vector2(0, -1)
+spread = 110.0
+gravity = Vector2(0, 320)
+initial_velocity_min = 70.0
+initial_velocity_max = 140.0
+damping_min = 45.0
+damping_max = 70.0
+scale_amount_min = 0.45
+scale_amount_max = 0.75
+color = Color(1, 0.62, 0.5, 1)
+color_ramp = SubResource("Gradient_burst_fade")
+
+[node name="CorrectBurstBlue" type="CPUParticles2D" parent="DeliveryFx"]
+emitting = false
+amount = 6
+lifetime = 0.38
+one_shot = true
+explosiveness = 1.0
+texture = SubResource("GradientTexture2D_spark_dot")
+emission_shape = 1
+emission_sphere_radius = 5.0
+direction = Vector2(0, -1)
+spread = 110.0
+gravity = Vector2(0, 320)
+initial_velocity_min = 70.0
+initial_velocity_max = 140.0
+damping_min = 45.0
+damping_max = 70.0
+scale_amount_min = 0.45
+scale_amount_max = 0.75
+color = Color(0.62, 0.82, 1, 1)
+color_ramp = SubResource("Gradient_burst_fade")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Counters" type="Node2D" parent="HUD"]
+
+[node name="CorrectPanel" type="Sprite2D" parent="HUD/Counters"]
+texture_filter = 1
+position = Vector2(122, 55)
+scale = Vector2(0.085, 0.085)
+texture = ExtResource("6_hud_panel")
+
+[node name="ProgressPanel" type="Sprite2D" parent="HUD/Counters"]
+texture_filter = 1
+position = Vector2(360, 55)
+scale = Vector2(0.112, 0.1)
+texture = ExtResource("6_hud_panel")
+
+[node name="MistakePanel" type="Sprite2D" parent="HUD/Counters"]
+texture_filter = 1
+position = Vector2(598, 55)
+scale = Vector2(0.085, 0.085)
+texture = ExtResource("6_hud_panel")
+
+[node name="CorrectLabel" type="Label" parent="HUD/Counters"]
+offset_left = 30.0
+offset_top = 36.0
+offset_right = 214.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(0.75, 1, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+text = "Correct: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BlocksLabel" type="Label" parent="HUD/Counters"]
+offset_left = 238.0
+offset_top = 33.0
+offset_right = 482.0
+offset_bottom = 75.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 23
+text = "Blocks: 0 / 10"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MistakesLabel" type="Label" parent="HUD/Counters"]
+offset_left = 506.0
+offset_top = 36.0
+offset_right = 690.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(1, 0.78, 0.76, 1)
+theme_override_font_sizes/font_size = 20
+text = "Mistakes: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResultOverlay" type="Control" parent="HUD"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="DimBackground" type="ColorRect" parent="HUD/ResultOverlay"]
+layout_mode = 0
+offset_right = 720.0
+offset_bottom = 1280.0
+mouse_filter = 2
+color = Color(0.015, 0.025, 0.04, 0.72)
+
+[node name="ResultPanel" type="Control" parent="HUD/ResultOverlay"]
+anchors_preset = 0
+offset_left = 80.0
+offset_top = 380.0
+offset_right = 640.0
+offset_bottom = 853.0
+
+[node name="PanelVisual" type="Sprite2D" parent="HUD/ResultOverlay/ResultPanel"]
+texture_filter = 1
+position = Vector2(280, 236.5)
+scale = Vector2(0.41026, 0.41059)
+texture = ExtResource("7_result_panel")
+
+[node name="ResultTitle" type="Label" parent="HUD/ResultOverlay/ResultPanel"]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 84.0
+offset_right = 515.0
+offset_bottom = 139.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 32
+text = "LEVEL COMPLETE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResultSummary" type="Label" parent="HUD/ResultOverlay/ResultPanel"]
+layout_mode = 0
+offset_left = 45.0
+offset_top = 154.0
+offset_right = 515.0
+offset_bottom = 254.0
+theme_override_colors/font_color = Color(0.9, 0.92, 0.95, 1)
+theme_override_font_sizes/font_size = 24
+text = "Correct: 0 / 10
+Mistakes: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RetryButtonVisual" type="Sprite2D" parent="HUD/ResultOverlay/ResultPanel"]
+texture_filter = 1
+position = Vector2(280, 309)
+scale = Vector2(0.10129, 0.08287)
+texture = ExtResource("8_retry_button")
+
+[node name="RetryButton" type="Button" parent="HUD/ResultOverlay/ResultPanel"]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 276.0
+offset_right = 390.0
+offset_bottom = 336.0
+theme_override_font_sizes/font_size = 24
+text = "RETRY"
+flat = true

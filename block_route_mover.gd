@@ -24,7 +24,29 @@ var _is_outbound := false
 var _finished := false
 var _evaluated := false
 var _landing := false
+
+## Route-lock state. Set exactly once, the frame this block's center reaches
+## the Junction gate pivot; captured_direction (true = LEFT/red-outbound) is
+## read from the Junction that one time and then never touched again, so a
+## later gate toggle cannot retroactively change a block that already
+## crossed the pivot.
+var route_locked := false
+var captured_direction := true
+## Cached inbound-path progress offset of the gate pivot (in this path's own
+## arc-length units), resolved once in _ready() from the Junction's actual
+## GatePivot world position - not a hardcoded coordinate - so capture stays
+## correct even if path or pivot geometry changes later. -1.0 = unresolved,
+## falls back to path completion.
+var _pivot_progress := -1.0
 @onready var _block_visual: Node2D = $BlockVisual
+
+
+func _ready() -> void:
+	var path := get_parent() as Path2D
+	if path == null or path.curve == null or _junction == null:
+		return
+	var pivot_local := path.to_local(_junction.gate_pivot_global_position())
+	_pivot_progress = clampf(path.curve.get_closest_offset(pivot_local), 0.0, path.curve.get_baked_length())
 
 
 func configure(color_type: BlockTypes.BlockColor, junction: Node, red_outbound: Path2D, blue_outbound: Path2D, red_bin: Node, blue_bin: Node, delivery_evaluator: Node) -> void:
@@ -46,16 +68,39 @@ func _process(delta: float) -> void:
 		return
 	var path_length := path.curve.get_baked_length()
 	progress = minf(progress + speed * delta, path_length)
+
+	# Crossing is defined by arc-length progress against the pivot's own
+	# offset on this path, not by an exact coordinate match - so it fires on
+	# exactly one frame regardless of frame rate or step size.
+	if not _is_outbound and not route_locked:
+		var pivot_offset := _pivot_progress if _pivot_progress >= 0.0 else path_length
+		if progress >= pivot_offset:
+			_capture_route()
+
 	if progress < path_length:
 		return
 	if _is_outbound:
 		_finished = true
 		_complete_delivery(path)
 		return
-	var selected_outbound := _red_outbound if _junction.is_routing_left() else _blue_outbound
+	if not route_locked:
+		_capture_route()
+	var selected_outbound := _red_outbound if captured_direction else _blue_outbound
 	reparent(selected_outbound, false)
 	progress = 0.0
 	_is_outbound = true
+
+
+# Locks in this block's outbound direction. Idempotent (route_locked guards
+# re-entry) so it is safe to call defensively as well as from the primary
+# pivot-crossing check - either way, the capture and its confirmation pulse
+# happen exactly once per block.
+func _capture_route() -> void:
+	if route_locked:
+		return
+	route_locked = true
+	captured_direction = _junction.is_routing_left()
+	_junction.play_route_capture_pulse()
 
 
 # Called on every block still in the "active_blocks" group when the round ends.

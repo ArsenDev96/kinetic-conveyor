@@ -11,13 +11,14 @@ config_version=5
 [application]
 
 config/name="KineticConveyor"
-run/main_scene="res://level_1.tscn"
+run/main_scene="res://level_1_v3.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
 MCPRuntime="*uid://c1vitjeciumjv"
+GameFeel="*res://game_feel.gd"
 
 [display]
 
