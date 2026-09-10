@@ -743,11 +743,19 @@ func _show_result() -> void:
 	_result_title.text = "LEVEL COMPLETE" if round_state == STATE_WON else "OUT OF ORDER"
 	_result_summary.text = "Correct: %d / %d\nMistakes: %d" % [correct_count, TOTAL_BLOCKS, mistake_count]
 	_result_overlay.visible = true
-	# Bound to the autoload, not to this level, so the sting still lands if the
-	# player hits RETRY inside the delay and the scene is torn down.
+	# Routed through this level rather than straight at the autoload, so the
+	# pending sting is owned by the round that earned it: RETRY inside the delay
+	# frees this node, Godot drops the connection with it, and the finished
+	# round's sting cannot play over the fresh one. Nothing to cancel by hand.
 	var sting := &"level_complete" if round_state == STATE_WON else &"level_failed"
 	get_tree().create_timer(RESULT_STING_DELAY).timeout.connect(
-		GameFeel.event.bind(sting), CONNECT_ONE_SHOT)
+		_play_result_sting.bind(sting), CONNECT_ONE_SHOT)
+
+
+## Sole target of the result-sting timer. Reached only while this level is still
+## in the tree, which is exactly the lifecycle guarantee the scheduling relies on.
+func _play_result_sting(sting: StringName) -> void:
+	GameFeel.event(sting)
 
 
 func _on_retry_pressed() -> void:
